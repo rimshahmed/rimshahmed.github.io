@@ -1,6 +1,17 @@
-/**
- * A tiny shared flag. Set `attention.on = true` from anywhere and the
- * sentinel's eye flares brighter. Lives in its own module so that importing
- * it doesn't drag the whole Three.js bundle into the main chunk.
- */
-export const attention = { on: false }
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": false
+  },
+  "include": ["src"]
+}
