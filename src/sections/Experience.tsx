@@ -4,7 +4,7 @@ const ROLES = [
   {
     title: 'Operations & Data Analyst',
     company: 'SM Beauty LLC',
-    dates: 'Jan 2026 – Present',
+    dates: 'Jan 2026 — Present',
     bullets: [
       "Built the company's first structured BI reporting infrastructure — introduced Power BI and Power Query to replace ad hoc Excel workflows, compressing report cycles from 2–3 days to under 30 minutes.",
       'Absorbed core demand-planning duties after a planner departure — reorder monitoring, backorder-risk flagging, and forecasting support — on top of existing logistics and analytics work.',
@@ -14,17 +14,17 @@ const ROLES = [
   {
     title: 'Store Supervisor / Warehouse Manager',
     company: 'The Hijab Vault',
-    dates: 'Oct 2024 – Nov 2025',
+    dates: 'Oct 2024 — Nov 2025',
     bullets: [
-      'Oversaw inventory across 2 locations — forecasted stock levels, coordinated reorders, and maintained organization across 20+ SKUs.',
+      'Oversaw inventory across 2 locations — forecasted stock levels, coordinated reorders, and maintained organisation across 20+ SKUs.',
       'Led the full hiring cycle and trained 5+ associates; built and managed monthly schedules across both locations.',
-      "Designed a centralized Notion operations workspace and developed the company's Shopify storefront, adding 5 collections with 20+ product variations.",
+      "Designed a centralised Notion operations workspace and developed the company's Shopify storefront, adding 5 collections with 20+ product variations.",
     ],
   },
   {
     title: 'Sales Associate',
     company: 'The Hijab Vault',
-    dates: 'Mar 2023 – Oct 2024',
+    dates: 'Mar 2023 — Oct 2024',
     bullets: [
       'Managed day-to-day boutique operations — shipment receiving, restocking 20+ SKUs, and processing transactions with consistent accuracy.',
     ],
@@ -38,92 +38,71 @@ const EDU = [
     year: '2025',
     note: 'GPA 4.0',
   },
-  {
-    degree: 'Associate in Arts',
-    school: 'College of DuPage',
-    year: '2023',
-    note: '',
-  },
+  { degree: 'Associate in Arts', school: 'College of DuPage', year: '2023', note: '' },
 ]
 
 export default function Experience() {
   return (
-    <section id="experience" className="px-5 sm:px-8 md:px-10 py-24">
-      <FadeIn y={40}>
-        <h2
-          className="hero-heading font-black uppercase leading-none tracking-tight text-center mb-16"
-          style={{ fontSize: 'clamp(2.5rem, 10vw, 130px)' }}
-        >
-          Experience
-        </h2>
+    <section
+      id="experience"
+      className="mx-auto max-w-[1180px] px-[6vw] py-[14vh]"
+    >
+      <FadeIn y={30}>
+        <div className="mb-[7vh] flex items-baseline gap-[18px]">
+          <span className="label">03</span>
+          <div className="rule w-[clamp(40px,7vw,90px)]" />
+          <span className="eyebrow">Experience</span>
+        </div>
       </FadeIn>
 
-      <div className="max-w-[900px] mx-auto relative">
-        {/* the rail */}
-        <div
-          className="absolute left-[7px] top-2 bottom-2 w-px"
-          style={{ background: 'var(--line)' }}
-          aria-hidden="true"
-        />
-
+      <div className="max-w-[880px]">
         {ROLES.map((r, i) => (
-          <FadeIn key={r.title + r.dates} delay={i * 0.1} y={30}>
-            <div className="relative pl-10 pb-14">
-              <span
-                className="absolute left-0 top-2 w-[15px] h-[15px] rounded-full border-2"
-                style={{
-                  borderColor: 'var(--monitor)',
-                  background: 'var(--bg)',
-                  boxShadow: '0 0 18px rgba(79,201,255,0.5)',
-                }}
-                aria-hidden="true"
-              />
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <div>
-                  <h3 className="text-ink font-semibold text-xl sm:text-2xl leading-tight">
-                    {r.title}
-                  </h3>
-                  <p
-                    className="font-normal text-base sm:text-lg"
-                    style={{ color: 'var(--monitor)' }}
-                  >
-                    {r.company}
-                  </p>
-                </div>
-                <p className="text-muted uppercase tracking-[0.16em] text-xs font-light">
-                  {r.dates}
+          <FadeIn key={r.title + r.dates} delay={i * 0.08} y={26}>
+            {/* Each role is a ledger row: rule above, date in mono on the
+                left, everything else in a single measure on the right. */}
+            <div className="grid grid-cols-1 gap-x-[5vw] gap-y-[14px] border-t
+                            border-[var(--edge)] py-[38px] md:grid-cols-[140px_1fr]">
+              <div className="label pt-[6px]">{r.dates}</div>
+
+              <div>
+                <h3 className="display text-[clamp(1.5rem,2.8vw,2.15rem)]">
+                  {r.title}
+                </h3>
+                <p className="mono mt-[9px] text-[10px] text-[var(--line)]">
+                  {r.company}
                 </p>
+
+                <ul className="mt-[22px] flex flex-col gap-[13px]">
+                  {r.bullets.map((b, j) => (
+                    <li
+                      key={j}
+                      className="relative pl-[20px] text-[clamp(0.88rem,1.1vw,0.97rem)]
+                                 leading-[1.8] text-muted"
+                    >
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-[0.78em] h-[3px] w-[3px]
+                                   rounded-full bg-[var(--line)] opacity-70"
+                      />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="mt-4 space-y-2">
-                {r.bullets.map((b, j) => (
-                  <li
-                    key={j}
-                    className="text-muted font-light leading-relaxed text-sm sm:text-base pl-4 relative"
-                  >
-                    <span
-                      className="absolute left-0 top-[0.7em] w-1.5 h-1.5 rounded-full"
-                      style={{ background: 'var(--line)' }}
-                    />
-                    {b}
-                  </li>
-                ))}
-              </ul>
             </div>
           </FadeIn>
         ))}
       </div>
 
-      {/* Education */}
-      <FadeIn delay={0.2}>
-        <div className="max-w-[900px] mx-auto mt-6 pt-10 border-t" style={{ borderColor: 'var(--line)' }}>
-          <p className="text-muted uppercase tracking-[0.18em] text-xs font-light mb-6">
-            Education
-          </p>
-          <div className="grid sm:grid-cols-2 gap-6">
+      {/* ---------------- education ---------------- */}
+      <FadeIn delay={0.15}>
+        <div className="mt-[6vh] max-w-[880px] border-t border-[var(--edge)] pt-[38px]">
+          <p className="label mb-[26px]">Education</p>
+          <div className="grid gap-[26px] sm:grid-cols-2">
             {EDU.map((e) => (
               <div key={e.degree}>
-                <h4 className="text-ink font-medium text-lg">{e.degree}</h4>
-                <p className="text-muted font-light">
+                <h4 className="text-[15px] text-ink">{e.degree}</h4>
+                <p className="mono mt-[8px] text-[9.5px] text-faint">
                   {e.school} · {e.year}
                   {e.note && ` · ${e.note}`}
                 </p>

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { mouse } from '../lib/mouse'
 
 const SKILLS = [
   'Power BI',
@@ -8,7 +7,7 @@ const SKILLS = [
   'SQL',
   'MySQL',
   'Power Query',
-  'Data Visualization',
+  'Data Visualisation',
   'Demand Planning',
   'ERP Systems',
   'Excel (Advanced)',
@@ -20,9 +19,15 @@ const SKILLS = [
 ]
 
 /**
- * Skills marquee. The row's horizontal position is driven by how far the
- * page has scrolled, not by a timer — so it feels connected to the scroll.
- * The list is tripled so the wrap point is invisible.
+ * Skills marquee, restrained.
+ *
+ * The pills are gone — at this scale a row of outlined capsules reads as a
+ * tag cloud, which is the opposite of the register we want. What's left is
+ * a single line of quiet type separated by hairline dots, drifting on
+ * scroll rather than on a timer so it stays tied to the reader's motion.
+ *
+ * The row is tripled so the wrap point never lands in view. Masked at both
+ * edges so it dissolves into the page instead of being cut off.
  */
 export default function Marquee() {
   const section = useRef<HTMLElement>(null)
@@ -34,32 +39,11 @@ export default function Marquee() {
       const sec = section.current
       const r = row.current
       if (sec && r) {
-        const sectionTop = sec.offsetTop
         const offset =
-          (window.scrollY - sectionTop + window.innerHeight) * 0.3
-        // one third of the tripled row = the loop length
+          (window.scrollY - sec.offsetTop + window.innerHeight) * 0.22
         const loop = r.scrollWidth / 3
         const x = loop ? (((offset - 200) % loop) + loop) % loop : 0
-        r.style.transform = `translateX(${-x}px)`
-
-        // Light up pills near the cursor — the sentinel's beam passing over.
-        if (mouse.active) {
-          const pills = r.children
-          for (let i = 0; i < pills.length; i++) {
-            const el = pills[i] as HTMLElement
-            const b = el.getBoundingClientRect()
-            const cx = b.left + b.width / 2
-            const cy = b.top + b.height / 2
-            const d = Math.hypot(cx - mouse.px, cy - mouse.py)
-            const near = d < 200
-            el.style.borderColor = near
-              ? 'var(--monitor)'
-              : 'var(--line)'
-            el.style.boxShadow = near
-              ? '0 0 24px rgba(79,201,255,0.25)'
-              : 'none'
-          }
-        }
+        r.style.transform = `translate3d(${-x}px,0,0)`
       }
       raf.current = requestAnimationFrame(tick)
     }
@@ -74,26 +58,26 @@ export default function Marquee() {
   return (
     <section
       ref={section}
-      className="pt-24 sm:pt-32 md:pt-40 pb-10 overflow-hidden"
-      style={{ background: 'var(--bg)' }}
       aria-label="Skills"
+      className="overflow-hidden border-y border-[var(--edge)] py-[26px]"
+      style={{
+        WebkitMaskImage:
+          'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)',
+        maskImage:
+          'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)',
+      }}
     >
       <div
         ref={row}
-        className="flex gap-3 w-max"
+        className="flex w-max items-center gap-[38px]"
         style={{ willChange: 'transform' }}
       >
         {tripled.map((s, i) => (
-          <span
-            key={i}
-            className="rounded-full border text-ink font-normal uppercase tracking-widest px-8 py-4 whitespace-nowrap transition-all duration-300"
-            style={{
-              borderColor: 'var(--line)',
-              background: 'var(--surface)',
-              fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)',
-            }}
-          >
-            {s}
+          <span key={i} className="flex shrink-0 items-center gap-[38px]">
+            <span className="mono whitespace-nowrap text-[11px] text-muted">
+              {s}
+            </span>
+            <span className="h-[3px] w-[3px] rounded-full bg-[var(--line)] opacity-60" />
           </span>
         ))}
       </div>

@@ -4,6 +4,13 @@ import { Link } from 'react-router-dom'
 import FadeIn from '../components/FadeIn'
 import { projects, type Project } from '../data/projects'
 
+/**
+ * Stacked project cards. The sticky-stack mechanic is kept — it's the one
+ * piece of the old page that earned its keep — but the styling is stripped
+ * back: hairline borders instead of 2px, a 2px corner radius instead of
+ * 60px, and the metric set in mono so it reads as a figure rather than a
+ * decorative number.
+ */
 export default function Projects() {
   const container = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
@@ -12,21 +19,18 @@ export default function Projects() {
   })
 
   return (
-    <section
-      id="projects"
-      className="relative z-10 -mt-10 sm:-mt-12 md:-mt-14 rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] pt-20 pb-40"
-      style={{ background: 'var(--bg)' }}
-    >
-      <FadeIn y={40}>
-        <h2
-          className="hero-heading font-black uppercase leading-none tracking-tight text-center mb-16"
-          style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}
-        >
-          Projects
-        </h2>
-      </FadeIn>
+    <section id="projects" className="relative z-10 py-[14vh]">
+      <div className="mx-auto max-w-[1180px] px-[6vw]">
+        <FadeIn y={30}>
+          <div className="mb-[7vh] flex items-baseline gap-[18px]">
+            <span className="label">02</span>
+            <div className="rule w-[clamp(40px,7vw,90px)]" />
+            <span className="eyebrow">Selected work</span>
+          </div>
+        </FadeIn>
+      </div>
 
-      <div ref={container} className="px-4 sm:px-6 md:px-10">
+      <div ref={container} className="px-[4vw]">
         {projects.map((p, i) => (
           <Card
             key={p.slug}
@@ -52,38 +56,27 @@ function Card({
   total: number
   progress: any
 }) {
-  // Each card shrinks slightly as the next one slides over it,
-  // so the stack has visible depth instead of flat overlap.
-  const targetScale = 1 - (total - 1 - index) * 0.03
+  // Each card shrinks a touch as the next slides over it, so the stack has
+  // depth rather than flat overlap.
+  const targetScale = 1 - (total - 1 - index) * 0.025
   const range: [number, number] = [index / total, 1]
   const scale = useTransform(progress, range, [1, targetScale])
 
   return (
-    <div className="h-[85vh] flex items-start justify-center sticky top-24 md:top-32">
+    <div className="sticky top-[12vh] flex h-[86vh] items-start justify-center">
       <motion.article
-        style={{ scale, top: `${index * 28}px`, position: 'relative' }}
-        className="w-full max-w-[1200px] rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border-2 p-4 sm:p-6 md:p-8 transition-colors duration-500 hover:border-monitor"
-        // eslint-disable-next-line react/forbid-dom-props
+        style={{ scale, top: `${index * 22}px`, position: 'relative' }}
+        className="group w-full max-w-[1180px] border border-[var(--edge)]
+                   bg-surface p-[clamp(18px,2.6vw,34px)] transition-colors
+                   duration-700 ease-lux hover:border-[var(--edge-strong)]"
       >
-        <div
-          className="absolute inset-0 rounded-[40px] sm:rounded-[50px] md:rounded-[60px] -z-10"
-          style={{ background: 'var(--surface)', border: '2px solid var(--line)' }}
-        />
-
-        {/* Top row */}
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
-          <div className="flex items-baseline gap-5">
-            <span
-              className="hero-heading font-black leading-none"
-              style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}
-            >
-              {project.index}
-            </span>
+        {/* ---------- head ---------- */}
+        <div className="mb-[26px] flex flex-wrap items-start justify-between gap-5">
+          <div className="flex items-baseline gap-[22px]">
+            <span className="label pt-[6px]">{project.index}</span>
             <div>
-              <p className="text-muted uppercase tracking-[0.18em] text-xs sm:text-sm font-light">
-                {project.category}
-              </p>
-              <h3 className="text-ink font-semibold uppercase tracking-tight text-2xl sm:text-3xl md:text-4xl">
+              <p className="eyebrow mb-[7px]">{project.category}</p>
+              <h3 className="display text-[clamp(1.7rem,3.4vw,2.9rem)]">
                 {project.name}
               </h3>
             </div>
@@ -91,50 +84,55 @@ function Card({
 
           <Link
             to={`/projects/${project.slug}`}
-            className="rounded-full border-2 border-ink text-ink font-medium uppercase tracking-widest px-8 py-3 sm:px-10 sm:py-3.5 text-sm sm:text-base transition-colors duration-300 hover:bg-ink/10 hover:border-monitor"
+            className="relative inline-flex items-center gap-[11px] overflow-hidden
+                       border border-[var(--edge-strong)] px-[22px] py-[11px] font-mono
+                       text-[10.5px] uppercase tracking-[0.2em] text-ink no-underline
+                       transition-colors duration-500 ease-lux hover:border-[var(--fill-2)]"
           >
-            View Project
+            <span
+              aria-hidden
+              className="absolute inset-0 z-[1] translate-y-full bg-[var(--fill)]
+                         transition-transform duration-[550ms] ease-lux
+                         group-hover:translate-y-0"
+            />
+            <span className="relative z-[2]">View project</span>
+            <span
+              aria-hidden
+              className="relative z-[2] h-[2.5px] w-[2.5px] rounded-full bg-[var(--line)]"
+            />
           </Link>
         </div>
 
-        {/* Impact */}
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-          <p className="text-ink font-light max-w-[640px] leading-snug text-sm sm:text-base">
+        {/* ---------- blurb + the number ---------- */}
+        <div className="mb-[26px] flex flex-wrap items-end justify-between gap-6
+                        border-t border-[var(--edge)] pt-[22px]">
+          <p className="max-w-[62ch] text-[clamp(0.9rem,1.15vw,1rem)] leading-[1.8] text-muted">
             {project.blurb}
           </p>
           <div className="text-right">
-            <div
-              className="font-semibold"
-              style={{
-                color: 'var(--monitor)',
-                fontSize: 'clamp(1.8rem, 3vw, 2.6rem)',
-                lineHeight: 1,
-              }}
-            >
+            <div className="font-mono text-[clamp(1.5rem,2.4vw,2.1rem)] leading-none text-[var(--line-bright)]">
               {project.metric}
             </div>
-            <div className="text-muted uppercase tracking-[0.18em] text-[11px] mt-1 font-light">
-              {project.metricLabel}
-            </div>
+            <div className="label mt-[9px]">{project.metricLabel}</div>
           </div>
         </div>
 
-        {/* Media */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4">
-          <div className="md:col-span-2 flex flex-col gap-3 sm:gap-4">
+        {/* ---------- media ---------- */}
+        <div className="grid grid-cols-1 gap-[10px] md:grid-cols-5">
+          <div className="flex flex-col gap-[10px] md:col-span-2">
             <img
               src={project.images.a}
               alt=""
               loading="lazy"
-              className="w-full object-cover rounded-[30px] sm:rounded-[40px] md:rounded-[50px]"
-              style={{ height: 'clamp(110px, 12vw, 175px)' }}
+              className="w-full border border-[var(--edge)] object-cover"
+              style={{ height: 'clamp(100px, 11vw, 160px)' }}
             />
             <img
               src={project.images.b}
               alt=""
               loading="lazy"
-              className="w-full object-cover rounded-[30px] sm:rounded-[40px] md:rounded-[50px]"
-              style={{ height: 'clamp(130px, 16vw, 235px)' }}
+              className="w-full border border-[var(--edge)] object-cover"
+              style={{ height: 'clamp(120px, 15vw, 215px)' }}
             />
           </div>
           <div className="md:col-span-3">
@@ -142,20 +140,17 @@ function Card({
               src={project.images.tall}
               alt=""
               loading="lazy"
-              className="w-full h-full object-cover rounded-[30px] sm:rounded-[40px] md:rounded-[50px]"
-              style={{ minHeight: 'clamp(180px, 28vw, 425px)' }}
+              className="h-full w-full border border-[var(--edge)] object-cover"
+              style={{ minHeight: 'clamp(170px, 26vw, 385px)' }}
             />
           </div>
         </div>
 
-        {/* Stack */}
-        <div className="flex flex-wrap gap-2 mt-5">
+        {/* ---------- stack ---------- */}
+        <div className="mt-[22px] flex flex-wrap items-center gap-x-[20px] gap-y-[8px]
+                        border-t border-[var(--edge)] pt-[18px]">
           {project.stack.map((s) => (
-            <span
-              key={s}
-              className="rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.16em] text-muted font-light"
-              style={{ borderColor: 'var(--line)' }}
-            >
+            <span key={s} className="mono text-[9.5px] text-faint">
               {s}
             </span>
           ))}

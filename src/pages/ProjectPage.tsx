@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useEffect } from 'react'
 import CursorLight from '../components/CursorLight'
 import FadeIn from '../components/FadeIn'
+import { RuleLink } from '../components/Buttons'
 import { projects } from '../data/projects'
 
 export default function ProjectPage() {
@@ -14,9 +15,9 @@ export default function ProjectPage() {
 
   if (!p) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-6">
-        <h1 className="hero-heading font-black uppercase text-6xl">404</h1>
-        <Link to="/" className="text-monitor underline">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-[26px]">
+        <h1 className="display text-[clamp(3rem,10vw,7rem)]">404</h1>
+        <Link to="/" className="label">
           Back home
         </Link>
       </main>
@@ -36,49 +37,36 @@ export default function ProjectPage() {
     <main style={{ overflowX: 'clip', background: 'var(--bg)' }}>
       <CursorLight />
 
-      <nav className="px-6 md:px-10 pt-6 md:pt-8">
+      <nav className="px-[6vw] pt-[5vh]">
         <Link
           to="/"
-          className="text-ink font-medium uppercase tracking-wider text-sm md:text-lg hover:opacity-70 transition-opacity"
+          className="mono text-[10px] text-faint transition-colors duration-500
+                     ease-lux hover:text-[var(--line)]"
         >
           ← Back
         </Link>
       </nav>
 
-      <header className="px-5 sm:px-8 md:px-10 pt-16 pb-10 max-w-[900px] mx-auto">
+      <header className="mx-auto max-w-[900px] px-[6vw] pb-[6vh] pt-[10vh]">
         <FadeIn y={20}>
-          <p className="text-muted uppercase tracking-[0.18em] text-xs font-light mb-4">
-            {p.category}
-          </p>
+          <p className="eyebrow mb-[22px]">{p.category}</p>
         </FadeIn>
         <FadeIn delay={0.08} y={30}>
-          <h1
-            className="hero-heading font-black uppercase leading-none tracking-tight"
-            style={{ fontSize: 'clamp(2.5rem, 9vw, 6rem)' }}
-          >
-            {p.name}
-          </h1>
+          <h1 className="display text-[clamp(2.4rem,8vw,5.5rem)]">{p.name}</h1>
         </FadeIn>
         <FadeIn delay={0.16}>
-          <div className="mt-8 flex flex-wrap items-end gap-10">
+          <div className="mt-[42px] flex flex-wrap items-end gap-x-[7vw] gap-y-[26px]
+                          border-t border-[var(--edge)] pt-[26px]">
             <div>
-              <div
-                className="font-semibold leading-none"
-                style={{ color: 'var(--monitor)', fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}
-              >
+              <div className="font-mono text-[clamp(1.8rem,3.4vw,2.8rem)] leading-none
+                              text-[var(--line-bright)]">
                 {p.metric}
               </div>
-              <div className="text-muted uppercase tracking-[0.18em] text-[11px] mt-2 font-light">
-                {p.metricLabel}
-              </div>
+              <div className="label mt-[10px]">{p.metricLabel}</div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-x-[20px] gap-y-[8px]">
               {p.stack.map((s) => (
-                <span
-                  key={s}
-                  className="rounded-full border px-4 py-1.5 text-[11px] uppercase tracking-[0.16em] text-muted font-light"
-                  style={{ borderColor: 'var(--line)' }}
-                >
+                <span key={s} className="mono text-[9.5px] text-faint">
                   {s}
                 </span>
               ))}
@@ -88,21 +76,32 @@ export default function ProjectPage() {
       </header>
 
       <FadeIn delay={0.2}>
-        <div className="px-5 sm:px-8 md:px-10 max-w-[1100px] mx-auto grid md:grid-cols-3 gap-3">
-          <img src={p.images.a} alt="" className="w-full h-56 object-cover rounded-[30px]" />
-          <img src={p.images.b} alt="" className="w-full h-56 object-cover rounded-[30px]" />
-          <img src={p.images.tall} alt="" className="w-full h-56 object-cover rounded-[30px]" />
+        <div className="mx-auto grid max-w-[1100px] gap-[10px] px-[6vw] md:grid-cols-3">
+          <img
+            src={p.images.a}
+            alt=""
+            className="h-56 w-full border border-[var(--edge)] object-cover"
+          />
+          <img
+            src={p.images.b}
+            alt=""
+            className="h-56 w-full border border-[var(--edge)] object-cover"
+          />
+          <img
+            src={p.images.tall}
+            alt=""
+            className="h-56 w-full border border-[var(--edge)] object-cover"
+          />
         </div>
       </FadeIn>
 
-      <div className="px-5 sm:px-8 md:px-10 max-w-[760px] mx-auto py-20 space-y-12">
+      <div className="mx-auto max-w-[760px] px-[6vw] py-[12vh]">
         {sections.map((s, i) => (
           <FadeIn key={s.label} delay={i * 0.05}>
-            <div>
-              <p className="text-muted uppercase tracking-[0.18em] text-xs font-light mb-3">
-                {s.label}
-              </p>
-              <p className="text-ink font-light leading-relaxed text-lg">
+            <div className="grid grid-cols-1 gap-x-[4vw] gap-y-[12px] border-t
+                            border-[var(--edge)] py-[32px] md:grid-cols-[150px_1fr]">
+              <p className="label pt-[5px]">{s.label}</p>
+              <p className="text-[clamp(0.95rem,1.25vw,1.075rem)] leading-[1.85] text-muted">
                 {s.body}
               </p>
             </div>
@@ -110,13 +109,8 @@ export default function ProjectPage() {
         ))}
       </div>
 
-      <div className="px-5 pb-24 text-center">
-        <Link
-          to="/#projects"
-          className="inline-block rounded-full border-2 border-ink text-ink font-medium uppercase tracking-widest px-10 py-3.5 hover:bg-ink/10 hover:border-monitor transition-colors"
-        >
-          All projects
-        </Link>
+      <div className="px-[6vw] pb-[14vh]">
+        <RuleLink href="/#projects">All projects</RuleLink>
       </div>
     </main>
   )

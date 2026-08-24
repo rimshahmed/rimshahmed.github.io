@@ -4,16 +4,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0C0C0C',
-        surface: '#141419',
-        ink: '#D7E2EA',
-        muted: '#8A929B',
-        monitor: '#4FC9FF',
-        'monitor-2': '#A8E8FF',
-        pop: '#B600A8',
+        bg: '#08090A',
+        surface: '#0E1012',
+        'surface-2': '#131619',
+        ink: '#E8E9EC',
+        muted: '#8D949E',
+        faint: '#5D636C',
+        // fills only — see the note in index.css
+        fill: '#071E17',
+        'fill-2': '#0A2A20',
+        // strokes only
+        line: '#7FA292',
+        'line-bright': '#9FBFB0',
+        eye: '#8FD8FF',
       },
       fontFamily: {
-        sans: ['Kanit', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Instrument Serif', 'Georgia', 'serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+      transitionTimingFunction: {
+        lux: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
     },
   },

@@ -2,42 +2,70 @@ import FadeIn from '../components/FadeIn'
 import { ContactButton } from '../components/Buttons'
 
 const LINKS = [
-  { label: 'Email', value: 'rimshaa314@gmail.com', href: 'mailto:rimshaa314@gmail.com' },
+  {
+    label: 'Email',
+    value: 'rimshaa314@gmail.com',
+    href: 'mailto:rimshaa314@gmail.com',
+  },
   {
     label: 'LinkedIn',
     value: 'in/rimsha-ahmed-997163223',
     href: 'https://linkedin.com/in/rimsha-ahmed-997163223',
   },
-  { label: 'Résumé', value: 'Download PDF', href: '/Rimsha_Ahmed_Resume.pdf' },
+  {
+    label: 'Résumé',
+    value: 'Download PDF',
+    href: `${import.meta.env.BASE_URL}Rimsha_Ahmed_Resume.pdf`,
+  },
 ]
 
 export default function Contact() {
   return (
     <section
       id="contact"
-      className="min-h-[60vh] flex flex-col items-center justify-center px-5 sm:px-8 md:px-10 py-24"
+      className="mx-auto max-w-[1180px] px-[6vw] pb-[8vh] pt-[14vh]"
     >
-      <FadeIn y={40}>
-        <h2
-          className="hero-heading font-black uppercase leading-none tracking-tight text-center"
-          style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}
-        >
-          Let's talk
+      <FadeIn y={30}>
+        <div className="mb-[7vh] flex items-baseline gap-[18px]">
+          <span className="label">05</span>
+          <div className="rule w-[clamp(40px,7vw,90px)]" />
+          <span className="eyebrow">Contact</span>
+        </div>
+      </FadeIn>
+
+      <FadeIn y={34}>
+        <h2 className="display max-w-[15ch] text-[clamp(2.8rem,8vw,7rem)]">
+          Let&apos;s <em>talk</em>
         </h2>
       </FadeIn>
 
-      <div className="mt-12 flex flex-col sm:flex-row items-center gap-8 sm:gap-14">
+      <FadeIn y={24} delay={0.12}>
+        <p className="mt-[30px] max-w-[46ch] text-[clamp(0.95rem,1.25vw,1.075rem)] leading-[1.85] text-muted">
+          Open to analytics and operations roles. The fastest way to reach me is
+          email — I answer everything.
+        </p>
+      </FadeIn>
+
+      <div className="mt-[8vh] grid grid-cols-1 sm:grid-cols-3">
         {LINKS.map((l, i) => (
-          <FadeIn key={l.label} delay={0.1 + i * 0.08}>
-            <a href={l.href} className="group block text-center sm:text-left">
-              <span className="block text-muted uppercase tracking-[0.18em] text-[11px] font-light mb-1">
-                {l.label}
-              </span>
-              <span className="text-ink font-light text-lg sm:text-xl relative">
+          <FadeIn key={l.label} delay={0.16 + i * 0.08}>
+            <a
+              href={l.href}
+              {...(l.href.startsWith('http')
+                ? { target: '_blank', rel: 'noreferrer noopener' }
+                : {})}
+              className="group block border-t border-[var(--edge)] py-[22px] pr-6
+                         transition-colors duration-500 ease-lux
+                         hover:border-[var(--line)]"
+            >
+              <span className="label mb-[10px] block">{l.label}</span>
+              <span className="relative inline-block text-[15px] text-ink">
                 {l.value}
                 <span
-                  className="absolute left-0 -bottom-1 h-px w-0 group-hover:w-full transition-all duration-400"
-                  style={{ background: 'var(--monitor)' }}
+                  aria-hidden
+                  className="absolute -bottom-[3px] left-0 h-px w-full origin-left
+                             scale-x-0 bg-[var(--line)] transition-transform
+                             duration-500 ease-lux group-hover:scale-x-100"
                 />
               </span>
             </a>
@@ -45,20 +73,14 @@ export default function Contact() {
         ))}
       </div>
 
-      <div className="mt-14">
-        <FadeIn delay={0.35}>
-          <ContactButton />
-        </FadeIn>
-      </div>
+      <FadeIn delay={0.4}>
+        <div className="mt-[7vh]">
+          <ContactButton label="Email me" />
+        </div>
+      </FadeIn>
 
-      <p className="mt-20 text-muted font-light text-xs uppercase tracking-[0.16em] text-center">
-        © 2026 Rimsha Ahmed · Built from scratch in React ·{' '}
-        <a
-          href="https://github.com/"
-          className="hover:text-ink transition-colors"
-        >
-          Source on GitHub →
-        </a>
+      <p className="mono mt-[12vh] border-t border-[var(--edge)] pt-[22px] text-[9.5px] text-faint">
+        © 2026 Rimsha Ahmed · Built from scratch in React
       </p>
     </section>
   )

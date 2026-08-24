@@ -3,14 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --bg: #0c0c0c;
-  --surface: #141419;
-  --ink: #d7e2ea;
-  --muted: #8a929b;
-  --monitor: #4fc9ff;
-  --monitor-2: #a8e8ff;
-  --pop: #b600a8;
-  --line: rgba(215, 226, 234, 0.12);
+  /* --- ground ------------------------------------------------------- */
+  --bg: #08090a;
+  --surface: #0e1012;
+  --surface-2: #131619;
+
+  /* --- ink ---------------------------------------------------------- */
+  --ink: #e8e9ec;
+  --muted: #8d949e;
+  --faint: #5d636c;
+
+  /* --- the green -----------------------------------------------------
+     These are fills, never strokes. At roughly 1.2:1 against the page
+     they are invisible as hairlines, but light ink on top of them runs
+     past 13:1, which is where they look expensive. */
+  --fill: #071e17;
+  --fill-2: #0a2a20;
+
+  /* --- the strokes ---------------------------------------------------
+     Everything thin — rules, small-caps labels, the dot on a button —
+     uses these. Both clear 7:1 on the page background. */
+  --line: #7fa292;
+  --line-bright: #9fbfb0;
+
+  /* --- hairline borders --------------------------------------------- */
+  --edge: rgba(232, 233, 236, 0.09);
+  --edge-strong: rgba(232, 233, 236, 0.18);
+
+  /* --- the sentinel's eye. The one cool note on the page. ------------ */
+  --eye: #8fd8ff;
 
   /* cursor position, written by <CursorLight /> */
   --mx: 50vw;
@@ -27,36 +48,91 @@ html,
 body,
 #root {
   background: var(--bg);
-  font-family: 'Kanit', sans-serif;
   color: var(--ink);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 300;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Gradient display type used on every major heading */
-.hero-heading {
-  background: linear-gradient(180deg, #646973 0%, #bbccd7 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+::selection {
+  background: var(--fill-2);
+  color: var(--ink);
 }
 
-/* The page-level cyan wash that follows the cursor.
-   The sentinel's light appears to spill onto the page itself. */
+/* ------------------------------------------------------------------ */
+/*  Type                                                               */
+/* ------------------------------------------------------------------ */
+
+/* Display face. Used for headings only, always large, never bold —
+   Instrument Serif has one weight and the italic is where the
+   character is. */
+.display {
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+}
+
+.display em {
+  font-style: italic;
+}
+
+/* Metadata face. Labels, metrics, dates, section numbers — anything
+   that should read as data rather than prose. */
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--line);
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* A hairline rule that carries the accent without shouting. */
+.rule {
+  height: 1px;
+  background: var(--line);
+  opacity: 0.42;
+}
+
+/* ------------------------------------------------------------------ */
+/*  The cursor wash — now sage rather than cyan, and much fainter.      */
+/* ------------------------------------------------------------------ */
 .cursor-light {
   position: fixed;
   inset: 0;
   z-index: 5;
   pointer-events: none;
   background: radial-gradient(
-    circle 380px at var(--mx) var(--my),
-    rgba(79, 201, 255, 0.1),
-    transparent 70%
+    circle 420px at var(--mx) var(--my),
+    rgba(127, 162, 146, 0.055),
+    transparent 68%
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Motion                                                             */
+/* ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
