@@ -108,6 +108,29 @@ html {
   color: var(--faint);
 }
 
+/* Code. Deliberately quiet — no syntax rainbow, because six token colours
+   would undo the restraint the rest of the page is built on. Comments drop
+   to the faint tone, which is enough hierarchy to read by. */
+.code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.8;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #c8cdd4;
+  background: #0b0d0f;
+  border: 1px solid var(--edge);
+  padding: 22px 24px;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.code .cm {
+  color: var(--faint);
+}
+
 /* A hairline rule that carries the accent without shouting. */
 .rule {
   height: 1px;

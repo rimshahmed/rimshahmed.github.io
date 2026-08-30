@@ -3,6 +3,9 @@ import { useEffect } from 'react'
 import CursorLight from '../components/CursorLight'
 import FadeIn from '../components/FadeIn'
 import { RuleLink } from '../components/Buttons'
+import StackRow from '../components/StackRow'
+import ProjectMedia from '../components/ProjectMedia'
+import CodeBlock from '../components/CodeBlock'
 import { projects } from '../data/projects'
 
 export default function ProjectPage() {
@@ -64,32 +67,26 @@ export default function ProjectPage() {
               </div>
               <div className="label mt-[10px]">{p.metricLabel}</div>
             </div>
-            <div className="flex flex-wrap items-center gap-x-[20px] gap-y-[8px]">
-              {p.stack.map((s) => (
-                <span key={s} className="mono text-[9.5px] text-faint">
-                  {s}
-                </span>
-              ))}
-            </div>
+            <StackRow stack={p.stack} size={20} />
           </div>
         </FadeIn>
       </header>
 
       <FadeIn delay={0.2}>
         <div className="mx-auto grid max-w-[1100px] gap-[10px] px-[6vw] md:grid-cols-3">
-          <img
+          <ProjectMedia
             src={p.images.a}
-            alt=""
+            video={p.videos?.a}
             className="h-56 w-full border border-[var(--edge)] object-cover"
           />
-          <img
+          <ProjectMedia
             src={p.images.b}
-            alt=""
+            video={p.videos?.b}
             className="h-56 w-full border border-[var(--edge)] object-cover"
           />
-          <img
+          <ProjectMedia
             src={p.images.tall}
-            alt=""
+            video={p.videos?.tall}
             className="h-56 w-full border border-[var(--edge)] object-cover"
           />
         </div>
@@ -107,6 +104,34 @@ export default function ProjectPage() {
             </div>
           </FadeIn>
         ))}
+      </div>
+
+      {/* ---------- the judgement call ----------
+          Sits after the narrative and before the code: the reasoning is
+          what a reader actually weighs, and the snippet is the evidence
+          for it rather than the point in itself. */}
+      <div className="mx-auto max-w-[760px] px-[6vw] pb-[12vh]">
+        <FadeIn y={26}>
+          <div className="border border-[var(--edge)] bg-surface p-[clamp(22px,3vw,36px)]">
+            <p className="label mb-[18px]">Decision</p>
+            <h2 className="display mb-[20px] text-[clamp(1.35rem,2.6vw,1.9rem)]">
+              {p.decision.title}
+            </h2>
+            <p className="text-[clamp(0.95rem,1.25vw,1.05rem)] leading-[1.85] text-muted">
+              {p.decision.body}
+            </p>
+
+            <CodeBlock
+              lang={p.snippet.lang}
+              label={p.snippet.label}
+              code={p.snippet.code}
+            />
+
+            <p className="mono mt-[16px] text-[9px] leading-[1.9] text-faint">
+              Illustrative extract · generic schema · not production code
+            </p>
+          </div>
+        </FadeIn>
       </div>
 
       <div className="px-[6vw] pb-[14vh]">

@@ -2,6 +2,8 @@ import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import FadeIn from '../components/FadeIn'
+import StackRow from '../components/StackRow'
+import ProjectMedia from '../components/ProjectMedia'
 import { projects, type Project } from '../data/projects'
 
 /**
@@ -82,9 +84,12 @@ function Card({
             </div>
           </div>
 
+          {/* Scoped to its own group. Left on the card's group it filled
+              whenever the cursor was anywhere on the card, which made the
+              hover meaningless — the whole card is a big target. */}
           <Link
             to={`/projects/${project.slug}`}
-            className="relative inline-flex items-center gap-[11px] overflow-hidden
+            className="group/btn relative inline-flex items-center gap-[11px] overflow-hidden
                        border border-[var(--edge-strong)] px-[22px] py-[11px] font-mono
                        text-[10.5px] uppercase tracking-[0.2em] text-ink no-underline
                        transition-colors duration-500 ease-lux hover:border-[var(--fill-2)]"
@@ -93,7 +98,7 @@ function Card({
               aria-hidden
               className="absolute inset-0 z-[1] translate-y-full bg-[var(--fill)]
                          transition-transform duration-[550ms] ease-lux
-                         group-hover:translate-y-0"
+                         group-hover/btn:translate-y-0"
             />
             <span className="relative z-[2]">View project</span>
             <span
@@ -103,12 +108,21 @@ function Card({
           </Link>
         </div>
 
-        {/* ---------- blurb + the number ---------- */}
+        {/* ---------- blurb, stack, and the number ----------
+            The tool icons live here rather than at the foot of the card.
+            At the foot they were technically present and practically
+            invisible: the next sticky card slides over the bottom of this
+            one, so anything down there is covered before it is read. */}
         <div className="mb-[26px] flex flex-wrap items-end justify-between gap-6
                         border-t border-[var(--edge)] pt-[22px]">
-          <p className="max-w-[62ch] text-[clamp(0.9rem,1.15vw,1rem)] leading-[1.8] text-muted">
-            {project.blurb}
-          </p>
+          <div className="max-w-[62ch]">
+            <p className="text-[clamp(0.9rem,1.15vw,1rem)] leading-[1.8] text-muted">
+              {project.blurb}
+            </p>
+            <div className="mt-[20px]">
+              <StackRow stack={project.stack} />
+            </div>
+          </div>
           <div className="text-right">
             <div className="font-mono text-[clamp(1.5rem,2.4vw,2.1rem)] leading-none text-[var(--line-bright)]">
               {project.metric}
@@ -120,40 +134,27 @@ function Card({
         {/* ---------- media ---------- */}
         <div className="grid grid-cols-1 gap-[10px] md:grid-cols-5">
           <div className="flex flex-col gap-[10px] md:col-span-2">
-            <img
+            <ProjectMedia
               src={project.images.a}
-              alt=""
-              loading="lazy"
+              video={project.videos?.a}
               className="w-full border border-[var(--edge)] object-cover"
               style={{ height: 'clamp(100px, 11vw, 160px)' }}
             />
-            <img
+            <ProjectMedia
               src={project.images.b}
-              alt=""
-              loading="lazy"
+              video={project.videos?.b}
               className="w-full border border-[var(--edge)] object-cover"
               style={{ height: 'clamp(120px, 15vw, 215px)' }}
             />
           </div>
           <div className="md:col-span-3">
-            <img
+            <ProjectMedia
               src={project.images.tall}
-              alt=""
-              loading="lazy"
+              video={project.videos?.tall}
               className="h-full w-full border border-[var(--edge)] object-cover"
               style={{ minHeight: 'clamp(170px, 26vw, 385px)' }}
             />
           </div>
-        </div>
-
-        {/* ---------- stack ---------- */}
-        <div className="mt-[22px] flex flex-wrap items-center gap-x-[20px] gap-y-[8px]
-                        border-t border-[var(--edge)] pt-[18px]">
-          {project.stack.map((s) => (
-            <span key={s} className="mono text-[9.5px] text-faint">
-              {s}
-            </span>
-          ))}
         </div>
       </motion.article>
     </div>

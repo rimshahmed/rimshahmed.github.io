@@ -8,6 +8,14 @@ export type Project = {
   metricLabel: string
   stack: string[]
   images: { a: string; b: string; tall: string }
+  /** Optional screen recordings. Same slot as the still; the still is the
+   *  poster frame and the fallback, so these can be added one at a time. */
+  videos?: { a?: string; b?: string; tall?: string }
+  /** The judgement call. Not what was built — why it was built that way,
+   *  and what the obvious alternative would have got wrong. */
+  decision: { title: string; body: string }
+  /** One short, sanitised extract. Never production code. */
+  snippet: { lang: string; label: string; code: string }
   caseStudy: {
     problem: string
     before: string
@@ -23,6 +31,18 @@ export type Project = {
  * running on SAMPLE / SYNTHETIC data. No real SM Beauty account names,
  * revenue figures, or customer records in anything published here.
  * Drop replacements into /public/projects/ with the same filenames.
+ *
+ * NOTE ON SNIPPETS AND DECISIONS: the `snippet` and `decision` fields were
+ * drafted from written descriptions of each tool, not lifted from the real
+ * implementations. Before publishing, read each one and make it true — the
+ * technique, the thresholds, the reasoning. Where a draft differs from what
+ * was actually built, replace it. Publishing technical detail that does not
+ * match the work is worse than publishing none, because it is exactly the
+ * thing an interviewer will ask you to walk through.
+ *
+ * Keep every snippet sanitised: generic table and column names, no real
+ * schema, no live thresholds. The technique is yours to show; the employer's
+ * data model is not.
  */
 export const projects: Project[] = [
   {
@@ -39,6 +59,43 @@ export const projects: Project[] = [
       a: '/projects/sleeper-1.svg',
       b: '/projects/sleeper-2.svg',
       tall: '/projects/sleeper-3.svg',
+    },
+    decision: {
+      title: 'Each account is judged against its own rhythm',
+      body: "A fixed 180-day rule would have been simpler, but it treats a salon that reorders monthly the same as a distributor that reorders twice a year — the first is in trouble at 60 days and the second is fine at 150. So the threshold is relative: every account is scored against its own historical cadence. I used the median gap between orders rather than the mean, because a handful of bulk restocks pulled the average out far enough that genuinely lapsed accounts still looked healthy.",
+    },
+    snippet: {
+      lang: 'sql',
+      label: 'Scoring an account against its own cadence',
+      code: `WITH gaps AS (
+    SELECT
+        account_id,
+        order_date,
+        DATEDIFF(day,
+            LAG(order_date) OVER (
+                PARTITION BY account_id ORDER BY order_date),
+            order_date) AS days_since_prior
+    FROM fact_orders
+),
+cadence AS (
+    SELECT
+        account_id,
+        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY days_since_prior)
+            AS median_gap,
+        MAX(order_date) AS last_order
+    FROM gaps
+    WHERE days_since_prior IS NOT NULL
+    GROUP BY account_id
+)
+SELECT
+    account_id,
+    median_gap,
+    DATEDIFF(day, last_order, GETDATE()) AS days_quiet,
+    DATEDIFF(day, last_order, GETDATE())
+        / NULLIF(median_gap, 0) AS lapse_ratio
+FROM cadence
+WHERE DATEDIFF(day, last_order, GETDATE()) > median_gap * 1.5
+ORDER BY lapse_ratio DESC;`,
     },
     caseStudy: {
       problem:
@@ -69,6 +126,33 @@ export const projects: Project[] = [
       b: '/projects/route-2.svg',
       tall: '/projects/route-3.svg',
     },
+    decision: {
+      title: 'Score first, route second',
+      body: "The intuitive order is to route everything and then trim, but that undoes the optimisation — pull four stops out of an optimised loop and what's left is no longer an efficient path. So the shortlist is fixed before the Maps API ever sees it: leads are scored, cut to the number of stops that fit in a working day, and only then handed over for sequencing. This also keeps the request under the Directions API's waypoint ceiling, which a full lead list would blow straight past.",
+    },
+    snippet: {
+      lang: 'python',
+      label: 'Lead scoring, then waypoint optimisation',
+      code: `def score(lead: dict) -> float:
+    # Recency decays over roughly a quarter.
+    recency = math.exp(-lead["days_since_order"] / 90)
+    # log1p damps the whales so one large account
+    # cannot dominate the entire day's route.
+    value = math.log1p(lead["trailing_12mo_revenue"]) / MAX_LOG_REV
+    fit = CATEGORY_WEIGHTS.get(lead["category"], 0.5)
+    return 0.50 * recency + 0.35 * value + 0.15 * fit
+
+
+shortlist = sorted(leads, key=score, reverse=True)[:MAX_STOPS]
+
+route = gmaps.directions(
+    origin=depot,
+    destination=depot,
+    waypoints=[lead["address"] for lead in shortlist],
+    optimize_waypoints=True,
+    departure_time=datetime.now(),
+)`,
+    },
     caseStudy: {
       problem:
         'Building a day of sales calls meant cross-referencing a lead list against a map by hand. It took over an hour, and the resulting route was rarely efficient.',
@@ -97,6 +181,39 @@ export const projects: Project[] = [
       a: '/projects/backorder-1.svg',
       b: '/projects/backorder-2.svg',
       tall: '/projects/backorder-3.svg',
+    },
+    decision: {
+      title: 'Surface the disagreements instead of resolving them',
+      body: "It would have been easy to pick a winner — trust the ERP, overwrite the manual sheet, ship one clean number. I didn't, because the disagreement was the finding. Every row where the two sources differ marks a case the ERP log structurally fails to capture, which is exactly why the manual sheet existed in the first place. Auto-resolving would have produced a tidy report and quietly buried the process problem underneath it. The conflicts get flagged for review, and the pattern in them is what tells us what to fix upstream.",
+    },
+    snippet: {
+      lang: 'powerquery',
+      label: 'Merging two sources without picking a winner',
+      code: `let
+    Erp = Table.SelectColumns(ErpBackorders,
+            {"OrderKey", "Sku", "QtyOpen", "DueDate"}),
+
+    Manual = Table.SelectColumns(ManualLog,
+            {"OrderKey", "Sku", "QtyOpen", "DueDate"}),
+
+    // FullOuter, not Left. A left join silently drops the rows
+    // the manual sheet caught and the ERP missed — which is the
+    // whole reason the manual sheet exists.
+    Joined = Table.NestedJoin(
+            Erp,    {"OrderKey", "Sku"},
+            Manual, {"OrderKey", "Sku"},
+            "ManualRow", JoinKind.FullOuter),
+
+    Expanded = Table.ExpandTableColumn(Joined, "ManualRow",
+            {"QtyOpen", "DueDate"},
+            {"Manual.QtyOpen", "Manual.DueDate"}),
+
+    Flagged = Table.AddColumn(Expanded, "Conflict", each
+            [QtyOpen] <> null
+            and [Manual.QtyOpen] <> null
+            and [QtyOpen] <> [Manual.QtyOpen])
+in
+    Flagged`,
     },
     caseStudy: {
       problem:
