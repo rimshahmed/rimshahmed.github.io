@@ -32,13 +32,21 @@ export type Project = {
  * revenue figures, or customer records in anything published here.
  * Drop replacements into /public/projects/ with the same filenames.
  *
- * NOTE ON SNIPPETS AND DECISIONS: the `snippet` and `decision` fields were
- * drafted from written descriptions of each tool, not lifted from the real
- * implementations. Before publishing, read each one and make it true — the
- * technique, the thresholds, the reasoning. Where a draft differs from what
- * was actually built, replace it. Publishing technical detail that does not
- * match the work is worse than publishing none, because it is exactly the
- * thing an interviewer will ask you to walk through.
+ * NOTE ON SNIPPETS AND DECISIONS:
+ *   01 Sleeper Account Report — VERIFIED. Tier ladder and transition
+ *      classifier transcribed from the workbook's own M, column names
+ *      shortened. The earlier draft claimed a median-cadence threshold; the
+ *      real model uses a fixed 180-day flag plus the tier ladder, and has
+ *      been corrected.
+ *   02 Salesman Route Generator — VERIFIED. Scoring rubric and bands are the
+ *      real ones, with column names shortened. The earlier draft invented a
+ *      Python decay function that does not exist.
+ *   03 Backorder Merge Tool — UNVERIFIED. Still drafted from description
+ *      alone. Read it and make it true before publishing, or remove it.
+ *
+ * Publishing technical detail that does not match the work is worse than
+ * publishing none: it is exactly the thing an interviewer will ask you to
+ * walk through.
  *
  * Keep every snippet sanitised: generic table and column names, no real
  * schema, no live thresholds. The technique is yours to show; the employer's
@@ -61,41 +69,31 @@ export const projects: Project[] = [
       tall: '/projects/sleeper-3.svg',
     },
     decision: {
-      title: 'Each account is judged against its own rhythm',
-      body: "A fixed 180-day rule would have been simpler, but it treats a salon that reorders monthly the same as a distributor that reorders twice a year — the first is in trouble at 60 days and the second is fine at 150. So the threshold is relative: every account is scored against its own historical cadence. I used the median gap between orders rather than the mean, because a handful of bulk restocks pulled the average out far enough that genuinely lapsed accounts still looked healthy.",
+      title: 'Two snapshots, not one',
+      body: "A dormancy report that only looks at today can tell you an account is quiet. It cannot tell you whether that is new, or whether the account you called last quarter came back. So the report holds a frozen baseline snapshot alongside a refreshed one and classifies every account by the transition between them — Active/Healthy → Sleeper, Sleeper → Active/Healthy, Still Sleeping. The output is movement rather than state, which is what makes it possible to prove the call list worked. Sleepers are then laddered into five recoverability tiers by years since last invoice, because a two-year lapse and a six-year lapse are not the same sales problem and should not sit on the same list.",
     },
     snippet: {
-      lang: 'sql',
-      label: 'Scoring an account against its own cadence',
-      code: `WITH gaps AS (
-    SELECT
-        account_id,
-        order_date,
-        DATEDIFF(day,
-            LAG(order_date) OVER (
-                PARTITION BY account_id ORDER BY order_date),
-            order_date) AS days_since_prior
-    FROM fact_orders
-),
-cadence AS (
-    SELECT
-        account_id,
-        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY days_since_prior)
-            AS median_gap,
-        MAX(order_date) AS last_order
-    FROM gaps
-    WHERE days_since_prior IS NOT NULL
-    GROUP BY account_id
-)
-SELECT
-    account_id,
-    median_gap,
-    DATEDIFF(day, last_order, GETDATE()) AS days_quiet,
-    DATEDIFF(day, last_order, GETDATE())
-        / NULLIF(median_gap, 0) AS lapse_ratio
-FROM cadence
-WHERE DATEDIFF(day, last_order, GETDATE()) > median_gap * 1.5
-ORDER BY lapse_ratio DESC;`,
+      lang: 'powerquery',
+      label: 'Recoverability tiers and the transition classifier',
+      code: `AddSleeperTier = Table.AddColumn(Reordered, "SleeperTier_RF", each
+    if [DaysSinceLastInv_RF] = null then "Never Ordered"
+    else if [DaysSinceLastInv_RF] <=  730 then "Tier 1: 1-2 yrs (Most Recoverable)"
+    else if [DaysSinceLastInv_RF] <= 1095 then "Tier 2: 2-3 yrs"
+    else if [DaysSinceLastInv_RF] <= 1460 then "Tier 3: 3-4 yrs"
+    else if [DaysSinceLastInv_RF] <= 1825 then "Tier 4: 4-5 yrs"
+    else "Tier 5: 5+ yrs (Likely Lost)", type text),
+
+// The point of the report: not what an account is, but what it did.
+AddChangeCategory = Table.AddColumn(AddStatusChange, "Change Category", each
+    if      [Flag_Baseline] = null      then "New Account"
+    else if [Flag_Refresh]  = null      then "Account Dropped"
+    else if [Flag_Baseline] = "Sleeper"        and [Flag_Refresh] = "Active/Healthy"
+         then "Sleeper -> Active/Healthy"      // the recovery we are hunting
+    else if [Flag_Baseline] = "Active/Healthy" and [Flag_Refresh] = "Sleeper"
+         then "Active/Healthy -> Sleeper"      // the leak we want caught early
+    else if [Flag_Baseline] = "Sleeper"        and [Flag_Refresh] = "Sleeper"
+         then "Still Sleeping"
+    else "Other", type text)`,
     },
     caseStudy: {
       problem:
@@ -103,12 +101,12 @@ ORDER BY lapse_ratio DESC;`,
       before:
         'Sales worked from memory and from whichever accounts happened to come up in conversation. Reorder history lived in the ERP, but pulling it meant a manual export and an afternoon of spreadsheet work — so in practice, nobody pulled it.',
       built:
-        'A Power BI report that scores every account against its own historical reorder cadence and surfaces the ones approaching a 180-day gap, refreshed weekly into a ranked call list the sales team opens on Monday morning.',
-      how: 'Power Query pulls order history from the ERP, calculates each account’s median days-between-orders, and compares that to days-since-last-order. Accounts crossing their own threshold get flagged and ranked by historical value, so the highest-revenue lapses sit at the top of the list.',
+        'A Power Query model that holds a frozen baseline snapshot against a refreshed one, flags any account more than 180 days past its last invoice, ladders those into five recoverability tiers, and classifies every account by how it moved between the two snapshots.',
+      how: 'Both snapshots are normalised to a shared schema and joined on account number. Days since last invoice drives the sleeper flag and the tier ladder; comparing the flag across the two snapshots produces the transition categories — Sleeper to Active/Healthy, Active/Healthy to Sleeper, Still Sleeping — which is what turns a dormancy list into evidence that calling the list worked.',
       result:
         'Tied to over $40,000 in recovered revenue from accounts that had gone dormant and were reactivated after landing on the call list.',
       next:
-        'Adding a predicted-churn score so accounts get flagged before they cross the gap rather than after.',
+        'The baseline snapshot is pinned to a fixed date and has now aged past the point where the comparison is meaningful — it needs re-cutting, and the fix is to derive the baseline on a rolling window rather than hard-code it. Beyond that, a predicted-churn score so accounts get flagged before they cross the gap rather than after.',
     },
   },
   {
@@ -117,41 +115,72 @@ ORDER BY lapse_ratio DESC;`,
     name: 'Salesman Route Generator',
     category: 'Automation · SM Beauty',
     blurb:
-      'Lead-quality scoring combined with Google Maps routing to build optimized daily sales routes.',
+      'Scores every lead on a six-signal rubric, bands them hot to cold, and publishes those bands as map layers the field team can plan a day around.',
     metric: '< 10 min',
     metricLabel: 'route planning time',
-    stack: ['Python', 'Google Maps API', 'Google Sheets'],
+    stack: ['Power Query', 'Python', 'Google Maps API', 'Google Sheets'],
     images: {
       a: '/projects/route-1.svg',
       b: '/projects/route-2.svg',
       tall: '/projects/route-3.svg',
     },
     decision: {
-      title: 'Score first, route second',
-      body: "The intuitive order is to route everything and then trim, but that undoes the optimisation — pull four stops out of an optimised loop and what's left is no longer an efficient path. So the shortlist is fixed before the Maps API ever sees it: leads are scored, cut to the number of stops that fit in a working day, and only then handed over for sequencing. This also keeps the request under the Directions API's waypoint ceiling, which a full lead list would blow straight past.",
+      title: 'A rubric a salesperson can argue with',
+      body: "Lead scoring only works if the person holding the call list believes it. A model that outputs 0.83 with no explanation gets quietly ignored by the rep who thinks they know better — and often they do. So the score is six plain signals added together: what happened on the last call, whether they expressed interest, whether there is a named contact on file, how recently they ordered, which recoverability tier they sit in, and what they historically spend per order. Every score can be read back as a sentence, which is what makes a rep act on it. One override sits outside the arithmetic: a call logged as store closed subtracts ten, which is enough to sink any account to Cold no matter how good its history looks. That is deliberate — no amount of past revenue makes a closed store worth a drive. Publishing the bands as separate map layers rather than one ranked list follows the same logic: a rep planning a day thinks in geography first, so the score has to reach them in the shape they already work in.",
     },
     snippet: {
-      lang: 'python',
-      label: 'Lead scoring, then waypoint optimisation',
-      code: `def score(lead: dict) -> float:
-    # Recency decays over roughly a quarter.
-    recency = math.exp(-lead["days_since_order"] / 90)
-    # log1p damps the whales so one large account
-    # cannot dominate the entire day's route.
-    value = math.log1p(lead["trailing_12mo_revenue"]) / MAX_LOG_REV
-    fit = CATEGORY_WEIGHTS.get(lead["category"], 0.5)
-    return 0.50 * recency + 0.35 * value + 0.15 * fit
+      lang: 'powerquery',
+      label: 'Lead quality score and banding',
+      code: `LeadQualityScore = Table.AddColumn(Source, "LeadQualityScore", each let
+    result     = if [CallResult] = null then "" else Text.Lower([CallResult]),
+    interested = if [Interested] = null then "" else [Interested],
 
+    // What actually happened on the last contact.
+    ContactSignal =
+        (if Text.Contains(result, "placed order")       then  3 else 0) +
+        (if Text.Contains(result, "requested salesman") then  3 else 0) +
+        (if Text.Contains(result, "catalog sent")       then  2 else 0) +
+        (if Text.Contains(result, "voicemail")          then  1 else 0) +
+        (if Text.Contains(result, "store closed")       then -10 else 0),
 
-shortlist = sorted(leads, key=score, reverse=True)[:MAX_STOPS]
+    HasSignal = ContactSignal > 0,
 
-route = gmaps.directions(
-    origin=depot,
-    destination=depot,
-    waypoints=[lead["address"] for lead in shortlist],
-    optimize_waypoints=True,
-    departure_time=datetime.now(),
-)`,
+    // Stated interest, weighted up when a real action backs it.
+    InterestScore =
+        if      interested = "Negative" then -1
+        else if interested = "Neutral"  then  1
+        else if interested = "Positive" and HasSignal then 3
+        else if interested = "Positive" then  2
+        else 0,
+
+    HasContact = if [ContactPerson] = null then 0 else 1,
+
+    RecencyScore =
+        if      [DaysSinceLastInvoice] = null then 0
+        else if [DaysSinceLastInvoice] <= 365 then 2
+        else if [DaysSinceLastInvoice] <= 730 then 1
+        else 0,
+
+    TierScore =
+        if      Text.Contains(tier, "Tier 1") then 3
+        else if Text.Contains(tier, "Tier 2") then 2
+        else if Text.Contains(tier, "Tier 3") then 1
+        else 0,
+
+    ValueScore =
+        if      [AvgOrderAmount] = null  then 0
+        else if [AvgOrderAmount] > 500   then 2
+        else if [AvgOrderAmount] > 200   then 1
+        else 0
+in
+    ContactSignal + InterestScore + HasContact
+    + RecencyScore + TierScore + ValueScore),
+
+Band = Table.AddColumn(LeadQualityScore, "LeadQualityBand", each
+    if      [LeadQualityScore] >= 9 then "Hot"
+    else if [LeadQualityScore] >= 6 then "Warm"
+    else if [LeadQualityScore] >= 3 then "Cool"
+    else "Cold")`,
     },
     caseStudy: {
       problem:
@@ -159,8 +188,8 @@ route = gmaps.directions(
       before:
         'A rep would pick accounts off a spreadsheet, look each one up individually, and sequence the day by intuition — often driving past a good lead to reach one they had already decided on.',
       built:
-        'A Python tool that scores leads on quality signals, filters to a target geography, and hands the shortlist to the Google Maps API to return an optimized driving order.',
-      how: 'Leads are pulled from Sheets, scored on order history and category fit, then clustered geographically. The scored shortlist goes to the Maps Directions API with waypoint optimization enabled; the result writes back to Sheets as an ordered, linkable route.',
+        'Two halves. Power Query scores every account on a six-signal rubric and sorts it into hot, warm, cool and cold bands. A Python step then pulls lead data through the Google API and writes each band out as its own KML layer, so the map opens with lead quality already colour-coded by geography.',
+      how: 'The scoring runs entirely in Power Query against the call log, ERP account data and the sleeper tiers — contact result, stated interest, whether a named contact exists, recency, tier, and average order value, summed and banded at 9, 6 and 3. Each band becomes its own KML layer, so a salesperson opens the map, sees where the hot accounts cluster, and builds the day around them rather than reading down a list.',
       result:
         'Route planning went from over an hour to under ten minutes, and the routes cover more qualified accounts per day.',
       next:
