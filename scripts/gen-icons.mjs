@@ -23,6 +23,8 @@ const brand = {
   mysql: 'MySQL',
   gsheets: 'Google Sheets',
   gmaps: 'Google Maps',
+  appsscript: 'Google Apps Script',
+  js: 'JavaScript',
 }
 
 // Purpose-drawn, 24x24, filled — same visual weight as the brand marks.
@@ -66,6 +68,9 @@ export const STACK_ICONS: Record<string, string> = {
   'ERP integration': 'erp',
   'ERP Systems': 'erp',
   Python: 'python',
+  'Apps Script': 'appsscript',
+  'Google Apps Script': 'appsscript',
+  JavaScript: 'js',
   'Google Maps API': 'gmaps',
   'Google Sheets': 'gsheets',
 }

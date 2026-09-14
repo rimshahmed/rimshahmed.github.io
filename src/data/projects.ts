@@ -33,15 +33,20 @@ export type Project = {
  * Drop replacements into /public/projects/ with the same filenames.
  *
  * NOTE ON SNIPPETS AND DECISIONS:
- *   01 Sleeper Account Report — VERIFIED. Tier ladder and transition
+ *   01 Sales Activity Tracker — VERIFIED against the project's own technical
+ *      write-up, which cites file and function names throughout and tags its
+ *      own inferences. Figures used here are the sourced ones. The build is
+ *      described as in pilot because the write-up says so; do not upgrade that
+ *      wording without a rollout actually happening.
+ *   02 Sleeper Account Report — VERIFIED. Tier ladder and transition
  *      classifier transcribed from the workbook's own M, column names
  *      shortened. The earlier draft claimed a median-cadence threshold; the
  *      real model uses a fixed 180-day flag plus the tier ladder, and has
  *      been corrected.
- *   02 Salesman Route Generator — VERIFIED. Scoring rubric and bands are the
+ *   03 Salesman Route Generator — VERIFIED. Scoring rubric and bands are the
  *      real ones, with column names shortened. The earlier draft invented a
  *      Python decay function that does not exist.
- *   03 Backorder Merge Tool — UNVERIFIED. Still drafted from description
+ *   04 Backorder Merge Tool — UNVERIFIED. Still drafted from description
  *      alone. Read it and make it true before publishing, or remove it.
  *
  * Publishing technical detail that does not match the work is worse than
@@ -54,14 +59,84 @@ export type Project = {
  */
 export const projects: Project[] = [
   {
-    slug: 'sleeper-account-report',
+    slug: 'sales-activity-tracker',
     index: '01',
+    name: 'Sales Activity Tracker',
+    category: 'Web App · SM Beauty',
+    blurb:
+      'A logged record of every customer visit and call, turned into next week\u2019s plan. Replaces a stack of per-salesman workbooks for a ~4,000-account book.',
+    metric: '4,600',
+    metricLabel: 'automated checks, 5 suites',
+    stack: ['Apps Script', 'JavaScript', 'Python', 'MySQL', 'Google Sheets'],
+    images: {
+      a: '/projects/sleeper-1.svg',
+      b: '/projects/sleeper-2.svg',
+      tall: '/projects/sleeper-3.svg',
+    },
+    decision: {
+      title: 'Ship the spreadsheet\u2019s bug on purpose',
+      body: "The follow-up rules were ported out of the team\u2019s live workbook, and one of them was broken. The call-log formula searches the result text for \u201ccatalog sent\u201d, but the dropdown only ever writes \u201cCatalog/Sales Flyer sent\u201d \u2014 so that branch had never fired on a single row, and every catalog call had been silently falling through to the generic interest rules instead. I proved it against the sheet\u2019s own cached values before touching anything. The engineering instinct is to fix it. I shipped it broken, behind a flag, with both paths tested. Fixing it moves the follow-up date on thousands of rows the morning it goes live, which is a decision about a sales team\u2019s workload, not a code cleanup \u2014 theirs to make, not mine to make for them by tidying. The same reasoning governs the rounding: Sheets rounds half away from zero, Python does banker\u2019s rounding, JavaScript rounds half up, and all three disagree at 80.5. Matching the spreadsheet was the requirement. Matching the language would have been the bug.",
+    },
+    snippet: {
+      lang: 'javascript',
+      label: 'The preserved branch, and the flag that governs it',
+      code: `// The live formula searches for "catalog sent". The dropdown writes
+// "Catalog/Sales Flyer sent". The branch has never fired in production —
+// verified against the sheet's own cached follow-up dates, which match
+// the fallback rules instead. Fixing it shifts thousands of dates on day
+// one, so the flag defaults to reproducing the bug and both paths are
+// tested. Turning it on is a Sales decision.
+var CATALOG_RULE_FIXED = false;
+
+function callFollowUp(contactDate, callStatus, interested, result, fixed) {
+  var d = dateOnly_(contactDate);
+  if (!d) return { date: null, reason: 'no contact date' };
+
+  fixed = (fixed == null) ? CATALOG_RULE_FIXED : fixed;
+  var r = String(result || '').toLowerCase();
+  var hit = fixed
+    ? (r.indexOf('catalog') >= 0 && r.indexOf('sent') >= 0)   // intended
+    : (r.indexOf('catalog sent') >= 0);                       // as shipped
+  if (hit) return { date: addDays_(d, 14), reason: 'catalog sent +14d' };
+
+  var ov = CALL_STATUS_OVERRIDE[callStatus];          // voicemail 14, no answer 3
+  if (ov != null) return { date: addDays_(d, ov), reason: 'status +' + ov + 'd' };
+
+  var days = CALL_INTEREST_DAYS[interested];          // pos 7, neutral 30, neg stop
+  return days == null
+    ? { date: null, reason: 'no rule matched' }
+    : { date: addDays_(d, days), reason: 'interest +' + days + 'd' };
+}
+
+// Sheets rounds half away from zero, Python uses banker's rounding, JS
+// rounds half up. Found by the port-diff suite disagreeing on 80.5.
+function roundHalfUp_(x) {
+  return x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5);
+}`,
+    },
+    caseStudy: {
+      problem:
+        'Thirteen reps covering roughly four thousand accounts kept their own Excel workbooks, so there was no single record of who had been visited, what was said, or who was owed a callback. Three questions came up every week \u2014 who is due to reorder, who owes money, who did I promise to call \u2014 and answering any of them meant opening somebody else\u2019s file.',
+      before:
+        'A stack of per-salesman workbooks plus a shared call log, refreshed by hand. Reorder timing lived in the ERP and reached the reps only when someone exported it. Nothing connected a visit logged on Tuesday to the plan built on Friday.',
+      built:
+        'A single-page web app on Apps Script over one Google Sheets workbook, fed nightly from the company\u2019s MySQL ERP by a Python job. Reps log visits and calls from a phone; the app derives each follow-up date from the team\u2019s own result vocabulary, buckets it overdue through later, and precomputes next week\u2019s visit plan and a collections list. Currently in pilot rather than fully rolled out.',
+      how: 'The browser never touches the sheet \u2014 every read and write crosses through google.script.run, and the app is deployed to execute as its owner so reps need no edit rights on the workbook. The rule engine is written twice on purpose: engine.py is the specification and RuleEngine.gs is the port, and a test suite diffs the two across 3,733 cases with SpreadsheetApp and Session replaced by proxies that throw, so any rule reaching for the spreadsheet fails loudly rather than passing quietly. Apps Script\u2019s six-minute execution ceiling shaped the whole design: one full plan pass reads about 140,000 cells, which is fine nightly and impossible per click, so the scan moved off the request path into a precomputed hidden tab read through a three-tier cache.',
+      result:
+        'Five test suites, 4,600 checks: static layout and wiring, a boot suite that loads the real page into a Node VM and drives every render path, the rule tables, the sync, and the port diff. The log\u2019s first twenty-three columns are pinned byte-for-byte to the legacy call-log layout so anything already built on it keeps working, and a test fails the build if anyone reorders them. The sync refuses to write rather than write badly \u2014 it checks row shape, blank dates, negative cadences and an aging invariant that reconciled across all 4,117 exported rows, and writes the new block before trimming the old so a failure leaves yesterday\u2019s data standing.',
+      next:
+        'The plan and the collections list deliberately disagree about who owns an account. The plan follows whoever logged the last activity, on the grounds that they are the one holding the relationship; collections follow the account owner on record, because the money is theirs to chase even when a colleague covered the store last week. Both are defensible and each is right for its own list \u2014 but having two ownership rules in one codebase without a written policy is how an account ends up on the wrong screen, and it already has. Next is picking one, or documenting why there are two. After that, reinstating a lead score to rank within a bucket, rebuilt rather than ported: the original blended account value and account warmth into a single number, which destroys the one distinction that actually drives a decision \u2014 big but cold is worth the drive, small but hot is worth a call. One of its six factors also read rep names where it meant store contacts, so it was always true and contributed nothing.'
+    },
+  },
+  {
+    slug: 'sleeper-account-report',
+    index: '02',
     name: 'Sleeper Account Report',
     category: 'BI Tool · SM Beauty',
     blurb:
-      'Auto-generated weekly call list surfacing dormant accounts approaching 180-day reorder gaps, giving sales a live view into reorder timing.',
-    metric: '$40K+',
-    metricLabel: 'recovered revenue',
+      'Ranks dormant accounts by how recoverable they are, then measures whether the ranking held. It did: Tier 1 came back 23 times more often than Tier 5.',
+    metric: '23×',
+    metricLabel: 'Tier 1 vs Tier 5 recovery',
     stack: ['Power BI', 'Power Query', 'SQL', 'ERP data'],
     images: {
       a: '/projects/sleeper-1.svg',
@@ -70,7 +145,7 @@ export const projects: Project[] = [
     },
     decision: {
       title: 'Two snapshots, not one',
-      body: "A dormancy report that only looks at today can tell you an account is quiet. It cannot tell you whether that is new, or whether the account you called last quarter came back. So the report holds a frozen baseline snapshot alongside a refreshed one and classifies every account by the transition between them — Active/Healthy → Sleeper, Sleeper → Active/Healthy, Still Sleeping. The output is movement rather than state, which is what makes it possible to prove the call list worked. Sleepers are then laddered into five recoverability tiers by years since last invoice, because a two-year lapse and a six-year lapse are not the same sales problem and should not sit on the same list.",
+      body: "A dormancy report that only looks at today can tell you an account is quiet. It cannot tell you whether that is new, or whether the account you called last quarter came back. So the report holds a frozen baseline snapshot alongside a refreshed one and classifies every account by the transition between them — Active/Healthy → Sleeper, Sleeper → Active/Healthy, Still Sleeping. The output is movement rather than state. Sleepers are laddered into five recoverability tiers by years since last invoice, on the assumption that a two-year lapse and a six-year lapse are not the same sales problem. One cycle later the data settled it: Tier 1 accounts came back at 16.4%, Tier 5 at 0.7% — a twenty-three-fold spread, with 93% of returning revenue concentrated in the top two tiers. The ranking shipped as a hypothesis and is now measured.",
     },
     snippet: {
       lang: 'powerquery',
@@ -102,16 +177,16 @@ AddChangeCategory = Table.AddColumn(AddStatusChange, "Change Category", each
         'Sales worked from memory and from whichever accounts happened to come up in conversation. Reorder history lived in the ERP, but pulling it meant a manual export and an afternoon of spreadsheet work — so in practice, nobody pulled it.',
       built:
         'A Power Query model that holds a frozen baseline snapshot against a refreshed one, flags any account more than 180 days past its last invoice, ladders those into five recoverability tiers, and classifies every account by how it moved between the two snapshots.',
-      how: 'Both snapshots are normalised to a shared schema and joined on account number. Days since last invoice drives the sleeper flag and the tier ladder; comparing the flag across the two snapshots produces the transition categories — Sleeper to Active/Healthy, Active/Healthy to Sleeper, Still Sleeping — which is what turns a dormancy list into evidence that calling the list worked.',
+      how: 'Both snapshots are normalised to a shared schema and joined on account number. Days since last invoice drives the sleeper flag and the tier ladder; comparing the flag across the two snapshots produces the transition categories — Sleeper to Active/Healthy, Active/Healthy to Sleeper, Still Sleeping. That comparison is what makes the ranking testable, because it records which accounts actually moved rather than only which are quiet today. Revenue from returning accounts was $77,879 where a rep had logged a call and an order followed; with no holdout group that figure is an association, not an attribution, and is reported as such.',
       result:
-        'Tied to over $40,000 in recovered revenue from accounts that had gone dormant and were reactivated after landing on the call list.',
+        'One cycle, February to May 2026: 2,422 dormant accounts in the baseline pool, 1,557 contacted, 947 calls logged, 132 accounts returned to active. The result worth reporting is the ranking. Tier 1 returned at 16.4% against Tier 5 at 0.7% — a twenty-three-fold spread — and the top two tiers produced 93% of returning revenue from 39% of the pool. Dormancy length predicts recoverability strongly enough to sort on, which is what the model was built to test.',
       next:
-        'The baseline snapshot is pinned to a fixed date and has now aged past the point where the comparison is meaningful — it needs re-cutting, and the fix is to derive the baseline on a rolling window rather than hard-code it. Beyond that, a predicted-churn score so accounts get flagged before they cross the gap rather than after.',
+        'A holdout. Reps worked the highest tiers first, so the called and uncalled groups are not comparable and the calling cannot be separated from accounts reordering on their own schedule. Next cycle randomises a control group within each tier, which turns an association into a measurement. Two model changes go with it: the 180-day flag needs to key off each account\u2019s own cadence, since 27.6% of the base naturally reorders slower than that and is being flagged while behaving normally, and the baseline needs deriving on a rolling window rather than pinned to a fixed date. The pause left 2,427 accounts dormant, 505 in the band that returned at 16.4% \u2014 a prioritised backlog rather than an open question.',
     },
   },
   {
     slug: 'salesman-route-generator',
-    index: '02',
+    index: '03',
     name: 'Salesman Route Generator',
     category: 'Automation · SM Beauty',
     blurb:
@@ -198,7 +273,7 @@ Band = Table.AddColumn(LeadQualityScore, "LeadQualityBand", each
   },
   {
     slug: 'backorder-merge-tool',
-    index: '03',
+    index: '04',
     name: 'Backorder Merge Tool',
     category: 'In Development · SM Beauty',
     blurb:
