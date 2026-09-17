@@ -4,6 +4,9 @@ const COMMENT_PREFIX: Record<string, string[]> = {
   sql: ['--'],
   python: ['#'],
   powerquery: ['//'],
+  dax: ['//'],
+  javascript: ['//'],
+  js: ['//'],
 }
 
 /* ------------------------------------------------------------------ *

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import ProjectPage from './pages/ProjectPage'
+import PersonalProjects from './pages/PersonalProjects'
 import './index.css'
 
 // Companion to public/404.html: if we arrived via the Pages 404 bounce,
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/personal" element={<PersonalProjects />} />
         <Route path="/projects/:slug" element={<ProjectPage />} />
       </Routes>
     </BrowserRouter>

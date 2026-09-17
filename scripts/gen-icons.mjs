@@ -25,6 +25,10 @@ const brand = {
   gmaps: 'Google Maps',
   appsscript: 'Google Apps Script',
   js: 'JavaScript',
+  nextjs: 'Next.js',
+  typescript: 'TypeScript',
+  postgres: 'PostgreSQL',
+  drizzle: 'Drizzle',
 }
 
 // Purpose-drawn, 24x24, filled — same visual weight as the brand marks.
@@ -71,6 +75,11 @@ export const STACK_ICONS: Record<string, string> = {
   'Apps Script': 'appsscript',
   'Google Apps Script': 'appsscript',
   JavaScript: 'js',
+  'Next.js': 'nextjs',
+  TypeScript: 'typescript',
+  PostgreSQL: 'postgres',
+  Postgres: 'postgres',
+  Drizzle: 'drizzle',
   'Google Maps API': 'gmaps',
   'Google Sheets': 'gsheets',
 }

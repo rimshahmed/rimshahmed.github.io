@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import FadeIn from '../components/FadeIn'
 import StackRow from '../components/StackRow'
 import ProjectMedia from '../components/ProjectMedia'
+import { RuleLink } from '../components/Buttons'
 import { projects, type Project } from '../data/projects'
 
 /**
@@ -13,6 +14,8 @@ import { projects, type Project } from '../data/projects'
  * 60px, and the metric set in mono so it reads as a figure rather than a
  * decorative number.
  */
+const work = projects.filter((p) => p.kind !== 'personal')
+
 export default function Projects() {
   const container = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
@@ -33,21 +36,36 @@ export default function Projects() {
       </div>
 
       <div ref={container} className="px-[4vw]">
-        {projects.map((p, i) => (
+        {work.map((p, i) => (
           <Card
             key={p.slug}
             project={p}
             index={i}
-            total={projects.length}
+            total={work.length}
             progress={scrollYProgress}
           />
         ))}
+      </div>
+
+      {/* The way out to the personal strand. Deliberately a quiet line rather
+          than a card: work built for a team and work built for myself are
+          different claims, and mixing them in one stack flattens both. */}
+      <div className="mx-auto mt-[6vh] max-w-[1180px] px-[6vw]">
+        <FadeIn y={20}>
+          <div className="border-t border-[var(--edge)] pt-[26px]">
+            <p className="mb-[14px] max-w-[52ch] text-[clamp(0.9rem,1.15vw,1rem)] leading-[1.8] text-muted">
+              Everything above was built for a team that uses it. There is a
+              second shelf of things built for myself.
+            </p>
+            <RuleLink href="/personal">Personal projects</RuleLink>
+          </div>
+        </FadeIn>
       </div>
     </section>
   )
 }
 
-function Card({
+export function Card({
   project,
   index,
   total,

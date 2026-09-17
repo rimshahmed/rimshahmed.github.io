@@ -121,15 +121,20 @@ export default function ProjectPage() {
               {p.decision.body}
             </p>
 
-            <CodeBlock
-              lang={p.snippet.lang}
-              label={p.snippet.label}
-              code={p.snippet.code}
-            />
+            {p.snippets?.map((sn) => (
+              <CodeBlock
+                key={sn.label}
+                lang={sn.lang}
+                label={sn.label}
+                code={sn.code}
+              />
+            ))}
 
-            <p className="mono mt-[16px] text-[9px] leading-[1.9] text-faint">
-              Illustrative extract · generic schema · not production code
-            </p>
+            {p.snippets?.length ? (
+              <p className="mono mt-[16px] text-[9px] leading-[1.9] text-faint">
+                Illustrative extract · generic schema · not production code
+              </p>
+            ) : null}
           </div>
         </FadeIn>
       </div>
