@@ -8,17 +8,16 @@ import { Card } from '../sections/Projects'
 import { projects } from '../data/projects'
 
 /**
- * The personal strand, on its own page rather than appended to the main
- * stack. Work built for a team that depends on it and work built for
- * myself are different claims about a person, and running them together
- * in one list quietly flattens both — the professional work loses the
- * weight of "people rely on this", and the personal work loses the
- * freedom of "I built this because I wanted it to exist".
+ * Everything that is not in the main stack: work tools still in
+ * development, then the things built for myself. Kept off the home page so
+ * the stack there only holds work a team already relies on.
  *
  * Same Card component as the main section, so the two pages cannot drift
  * apart visually.
  */
-const personal = projects.filter((p) => p.kind === 'personal')
+const personal = projects
+  .filter((p) => p.kind === 'other' || p.kind === 'personal')
+  .sort((x, y) => Number(y.kind === 'other') - Number(x.kind === 'other'))
 
 export default function PersonalProjects() {
   const container = useRef<HTMLDivElement>(null)
@@ -44,23 +43,23 @@ export default function PersonalProjects() {
       <header className="mx-auto max-w-[1180px] px-[6vw] pb-[4vh] pt-[9vh]">
         <FadeIn y={30}>
           <div className="mb-[5vh] flex items-baseline gap-[18px]">
-            <span className="label">P</span>
+            <span className="label">O</span>
             <div className="rule w-[clamp(40px,7vw,90px)]" />
-            <span className="eyebrow">Personal projects</span>
+            <span className="eyebrow">Other projects</span>
           </div>
         </FadeIn>
 
         <FadeIn y={34}>
           <h1 className="display max-w-[16ch] text-[clamp(2.4rem,7vw,5.5rem)]">
-            Built because I <em>wanted</em> them
+            The rest of the <em>shelf</em>
           </h1>
         </FadeIn>
 
         <FadeIn y={24} delay={0.12}>
           <p className="mt-[30px] max-w-[54ch] text-[clamp(0.95rem,1.25vw,1.075rem)]
                         leading-[1.85] text-muted">
-            No brief, no stakeholder, no deadline — which means every decision in
-            them is mine to defend. Some are finished. Some are honestly not.
+            Work tools still in development, and things I built for myself.
+            Some are finished. Some aren&apos;t yet.
           </p>
         </FadeIn>
       </header>

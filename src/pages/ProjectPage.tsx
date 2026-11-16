@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useEffect } from 'react'
 import CursorLight from '../components/CursorLight'
 import FadeIn from '../components/FadeIn'
-import { RuleLink } from '../components/Buttons'
+import { GhostButton, RuleLink } from '../components/Buttons'
 import StackRow from '../components/StackRow'
 import ProjectMedia from '../components/ProjectMedia'
 import CodeBlock from '../components/CodeBlock'
@@ -27,14 +27,18 @@ export default function ProjectPage() {
     )
   }
 
-  const sections = [
-    { label: 'The problem', body: p.caseStudy.problem },
-    { label: 'What existed before', body: p.caseStudy.before },
-    { label: 'What I built', body: p.caseStudy.built },
-    { label: 'How it works', body: p.caseStudy.how },
-    { label: 'The result', body: p.caseStudy.result },
-    { label: "What's next", body: p.caseStudy.next },
-  ]
+  const cs = p.caseStudy
+  const decision = p.decision
+  const sections = cs
+    ? [
+        { label: 'The problem', body: cs.problem },
+        { label: 'What existed before', body: cs.before },
+        { label: 'What I built', body: cs.built },
+        { label: 'How it works', body: cs.how },
+        { label: 'The result', body: cs.result },
+        { label: "What's next", body: cs.next },
+      ]
+    : [{ label: 'In progress', body: p.pending ?? 'Write-up coming.' }]
 
   return (
     <main style={{ overflowX: 'clip', background: 'var(--bg)' }}>
@@ -106,19 +110,28 @@ export default function ProjectPage() {
         ))}
       </div>
 
+      {p.link ? (
+        <div className="mx-auto max-w-[760px] px-[6vw] pb-[10vh]">
+          <GhostButton href={p.link.href} external>
+            {p.link.label}
+          </GhostButton>
+        </div>
+      ) : null}
+
       {/* ---------- the judgement call ----------
           Sits after the narrative and before the code: the reasoning is
           what a reader actually weighs, and the snippet is the evidence
           for it rather than the point in itself. */}
+      {decision ? (
       <div className="mx-auto max-w-[760px] px-[6vw] pb-[12vh]">
         <FadeIn y={26}>
           <div className="border border-[var(--edge)] bg-surface p-[clamp(22px,3vw,36px)]">
             <p className="label mb-[18px]">Decision</p>
             <h2 className="display mb-[20px] text-[clamp(1.35rem,2.6vw,1.9rem)]">
-              {p.decision.title}
+              {decision.title}
             </h2>
             <p className="text-[clamp(0.95rem,1.25vw,1.05rem)] leading-[1.85] text-muted">
-              {p.decision.body}
+              {decision.body}
             </p>
 
             {p.snippets?.map((sn) => (
@@ -138,6 +151,7 @@ export default function ProjectPage() {
           </div>
         </FadeIn>
       </div>
+      ) : null}
 
       <div className="px-[6vw] pb-[14vh]">
         <RuleLink href="/#projects">All projects</RuleLink>
