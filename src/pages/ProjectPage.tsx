@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useEffect } from 'react'
 import CursorLight from '../components/CursorLight'
 import FadeIn from '../components/FadeIn'
-import { RuleLink } from '../components/Buttons'
+import { GhostButton, RuleLink } from '../components/Buttons'
 import StackRow from '../components/StackRow'
 import ProjectMedia from '../components/ProjectMedia'
 import CodeBlock from '../components/CodeBlock'
@@ -109,6 +109,14 @@ export default function ProjectPage() {
           </FadeIn>
         ))}
       </div>
+
+      {p.link ? (
+        <div className="mx-auto max-w-[760px] px-[6vw] pb-[10vh]">
+          <GhostButton href={p.link.href} external>
+            {p.link.label}
+          </GhostButton>
+        </div>
+      ) : null}
 
       {/* ---------- the judgement call ----------
           Sits after the narrative and before the code: the reasoning is

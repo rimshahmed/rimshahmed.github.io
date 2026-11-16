@@ -22,6 +22,8 @@ export type Project = {
   /** 'work' fills the Selected work stack. 'other' (work still in
    *  development) and 'personal' both live on the Other projects page. */
   kind?: 'work' | 'other' | 'personal'
+  /** An outside thing worth opening — a live mockup, a demo. */
+  link?: { label: string; href: string }
   /** Shown in place of the case study while the write-up is pending. Only
    *  what is already sourced goes here — no figures until there are real ones. */
   pending?: string
@@ -62,10 +64,13 @@ export type Project = {
  *   03 Salesman Route Generator — VERIFIED. Scoring rubric and bands are the
  *      real ones from the workbook's M, column names shortened.
  *   04 ERP Migration Testing — STUB. Only what the role review and my own
- *      notes already state. Not yet confirmed: the Azure detail, the test
- *      environment, and which mockups can be shown. No figures until sourced.
- *   05 Store Lead Finder — STUB. Working title. Described from memory, no
- *      source read. No figures, no snippet, until the code has been read.
+ *      notes already state. Testing ran in a non-live copy. The linked mockups
+ *      run on sample data. No figures until sourced.
+ *   05 Lead Finder — VERIFIED against the code and my own system overview
+ *      (Nov 2026). Snippets are from leadfinder.py and normalize.py, lightly
+ *      trimmed. The account-growth figure is my own count, not an ERP query.
+ *      Deliberately generic: no place names, and the priority tiers are
+ *      described without saying what they are built from.
  *   O1 Backorder Merge Tool — UNVERIFIED. Moved to Other projects. Drafted from description alone.
  *      Make it true before publishing, or cut it.
  *   P1 Landlord Ops — written from the project's README only, no inference.
@@ -352,7 +357,7 @@ Band = Table.AddColumn(LeadQualityScore, "LeadQualityBand", each
     name: 'ERP Migration Testing',
     category: 'Systems Testing · SM Beauty',
     blurb:
-      "We’re moving off a legacy ERP and onto a new system on Azure. I tested it before go-live and drew up mockups for the screens I thought should change.",
+      "We’re moving off a legacy ERP and onto a new system on Azure. I tested it before go-live and mocked up a redesign of the whole thing, screen by screen.",
     metric: 'Pre-launch',
     metricLabel: 'tested ahead of go-live',
     stack: ['ERP Systems', 'Azure'],
@@ -361,27 +366,98 @@ Band = Table.AddColumn(LeadQualityScore, "LeadQualityBand", each
       b: '/projects/backorder-2.svg',
       tall: '/projects/backorder-3.svg',
     },
+    link: {
+      label: 'Open the redesign mockups',
+      href: 'https://claude.ai/artifact/9aQ9CiCTCSkNEsyuVZGYC2',
+    },
     pending:
-      "The full write-up is on its way. The short version: I worked with a teammate and the developer to test the new system ahead of go-live, covering sales order placement, label generation and workflow features. I also mocked up the screens I thought needed to change, so the feedback was something the developer could build from.",
+      "The full write-up is on its way. The short version: I worked with a teammate and the developer to test the new system ahead of go-live, covering sales order placement, label generation and workflow features. All of it ran in a test copy, not the live system, so nothing I tried could touch a real order. I also mocked up a redesign of the whole system, not just one screen, so my feedback was something the developer could build from. The mockups run on sample data.",
   },
   {
     kind: 'work',
-    slug: 'store-lead-finder',
+    slug: 'lead-finder',
     index: '05',
-    name: 'Store Lead Finder',
+    name: 'Lead Finder',
     category: 'Python · SM Beauty',
     blurb:
-      "A Python tool that pulls the beauty stores in any area you choose from Google’s API, and stays inside the free tier while it does. Next, I’m turning it into a cold-call app for sales.",
-    metric: 'Free tier',
-    metricLabel: 'Google API, by design',
-    stack: ['Python', 'Google Maps API'],
+      "One command pulls the stores in eight retail categories across a whole trade zone, removes the duplicates, and hands sales a map. Two runs, 1,224 requests, $0.00 in API cost.",
+    metric: '$0.00',
+    metricLabel: 'API cost · 1,224 requests',
+    stack: ['Python', 'Google Maps API', 'SQLite', 'KML'],
     images: {
       a: '/projects/route-1.svg',
       b: '/projects/route-2.svg',
       tall: '/projects/route-3.svg',
     },
-    pending:
-      "The full write-up is on its way. The tool takes an area, pulls the beauty stores inside it through Google’s API, and is built to stay within the free usage tier. The plan is to grow it into a cold-call tool for the sales team.",
+    decision: {
+      title: "I threw out the filter that sounded right",
+      body: "Google doesn't return fewer results when a search is thin. It pads the page with loosely related businesses nearby. One sparse category dropped from 1,622 results to 40 once the padding came out. My first fix was an include filter: keep a result only when something positively marked it as belonging. It sounded right and it didn't work. About 90% of real results carry only the generic type `store`, so there was no reliable signal to match on. So I flipped it. The filter only excludes things that are clearly wrong for the category, and everything else stays.",
+    },
+    snippets: [
+      {
+        lang: 'python',
+        label: 'Only pay for a second page when the first one is full',
+        code: `def search(self, query, center, radius_m, max_pages):
+    """Yield raw place dicts for one query at one center."""
+    body = self._body(query, center, radius_m)
+    token = None
+    for page in range(max_pages):
+        if token:
+            body = dict(body, pageToken=token)
+        payload = self._post(body)          # cache first, then budget, then API
+        places = payload.get("places", []) or []
+        yield from places
+        token = payload.get("nextPageToken")
+        # Adaptive: only pay for another page if this one came back full.
+        if not token or len(places) < 20:
+            break
+
+def _post(self, body):
+    key = Cache.key_for(body, self.tier)
+    cached = self.cache.get(key)
+    if cached is not None:
+        self.stats.cache_hits += 1
+        return cached
+    if self.stats.requests_made >= self.budget:
+        raise BudgetExceeded("Run stopped before making another API call.")
+    ...`,
+      },
+      {
+        lang: 'python',
+        label: 'One address form, used only to spot duplicates',
+        code: `def normalize_address(address: str) -> str:
+    """Canonical form used only for duplicate comparison, never for display."""
+    if not address:
+        return ""
+    a = address.lower().split(",")[0]        # street line only
+    a = a.replace("#", " ste ")              # "#4" is a unit, same as "Suite 4"
+    a = re.sub(r"[^\\w\\s]", " ", a)
+
+    tokens = []
+    for raw in a.split():
+        tok = _DIRECTIONS.get(raw, raw)
+        tok = _STREET_TYPES.get(tok, tok)
+        # Everything from the first unit marker onward is a suite inside the
+        # same building, so two records that differ only there are one lead.
+        if tok in _UNIT_TOKENS:
+            break
+        tokens.append(tok)
+    return " ".join(tokens).strip()`,
+      },
+    ],
+    caseStudy: {
+      problem:
+        "Finding new stores to sell to meant a manual loop: type a query, wait, export, reset, repeat. That was about 20 minutes of clicking per category, per city. Nobody can cover a territory that way.",
+      before:
+        "A scraping tool run by hand, one search at a time, and map layers imported and styled one by one.",
+      built:
+        "A Python pipeline that runs from one config file. It builds a list of search centers from every ZIP within a radius, or across a whole state, and gives each one a priority tier. It runs each retail category against each center through the Google Places API. Then it cleans up what comes back. Addresses are reduced to a standard form, duplicates are merged with the fuller record kept, and anything without a street number is dropped, because a map can't place it. Out the other end come an Excel workbook, with a sheet per category and a coverage report, and a styled KML file that imports every map layer in one step. A Google Sheets tracker sits next to it for logging follow-ups.",
+      how: "Google matches business names and place types. It knows nothing about who shops there. So the targeting lives in which ZIPs get searched, not in the search words. Cost shaped the rest. Google gives 1,000 free requests a month at the tier that includes phone numbers, then charges $0.035 each. One request returns up to 20 leads with the phone attached. Sparse categories search by city, not by ZIP. A second page is only requested when the first comes back full. Before anything runs, a dry-run estimator prints the exact request count and cost. A hard budget stops the run cleanly before it can go over, and still writes out what it has. Every response is cached for 30 days. The cache paid off on day one: the first run crashed on a file-permission error after all 999 calls had finished, and the re-run cost nothing.",
+      result:
+        "The first run covered 131 search centers across 8 categories in 999 requests. It collected 17,930 results and came out with 4,241 unique leads. A second run across another state used 225 requests and turned 4,470 results into 412 leads. Both cost $0.00, and a run takes about six minutes with nobody watching. Around 90% of raw results were duplicates, because neighbouring search areas return the same stores. Without the address matching, the output would be unusable. In that second state, active accounts went from about 10 at the start of the year to more than 20. The reps closed those accounts. This gave them the list to work from.",
+      next:
+        "Turning it into a cold-call tool for the sales team. Before that, the leads need matching against our existing customer list, so reps aren't sent to stores we already sell to. The address-matching function is already the right join. It needs the customer export. There's also a Census-based version of the priority tiers that I rewrote after a failure and haven't yet confirmed against a live response.",
+    },
   },
   {
     kind: 'other',
