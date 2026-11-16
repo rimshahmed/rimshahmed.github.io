@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { ContactButton } from '../components/Buttons'
+import ScrambleText from '../components/ScrambleText'
 
 const NAV = [
   { label: 'Work', href: '#projects' },
@@ -42,38 +43,41 @@ export default function Hero() {
         ))}
       </motion.nav>
 
-      {/* ---------------- the statement ---------------------------------- */}
-      <div className="relative z-20 mt-auto">
-        <motion.p
-          {...rise(0.12)}
-          className="eyebrow mb-[26px] whitespace-nowrap"
-        >
+      {/* ---------------- the statement ----------------------------------
+          Centred in the viewport, as one block: greeting, name, line, button.
+          Bottom-anchoring it left the whole upper half of the screen empty. */}
+      <div className="relative z-20 my-auto flex flex-col items-center py-[8vh] text-center">
+        <motion.p {...rise(0.12)} className="eyebrow mb-[30px] whitespace-nowrap">
           Chicago · Operations &amp; Data
         </motion.p>
 
-        {/* Broken by hand rather than by measure — "Hi, I'm / Rimsha" is the
-            only split that keeps the italic on its own line. */}
-        <motion.h1
-          {...rise(0.2)}
-          className="display text-[clamp(3.2rem,10.5vw,9.5rem)]"
-        >
-          Hi, I&apos;m
-          <br />
-          <em>Rimsha</em>
-        </motion.h1>
-      </div>
+        <h1 className="display">
+          <motion.span
+            {...rise(0.2)}
+            className="block text-[clamp(1.9rem,4.6vw,4rem)] text-muted"
+          >
+            Hi, I&apos;m
+          </motion.span>
+          {/* The name decodes itself in — see ScrambleText. */}
+          <motion.em
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="block text-[clamp(4.6rem,17vw,15rem)] leading-[0.95]"
+          >
+            <ScrambleText text="Rimsha" delay={0.45} duration={1.3} />
+          </motion.em>
+        </h1>
 
-      {/* ---------------- footer of the hero ----------------------------- */}
-      <div className="relative z-20 mt-[7vh] flex flex-wrap items-end justify-between gap-8">
         <motion.p
-          {...rise(0.34)}
-          className="max-w-[42ch] text-[clamp(0.95rem,1.4vw,1.1rem)] leading-[1.75] text-muted"
+          {...rise(1.5)}
+          className="mt-[4vh] max-w-[46ch] text-[clamp(0.95rem,1.4vw,1.1rem)] leading-[1.75] text-muted"
         >
           Operations and data analyst turning messy exports into dashboards,
           forecasts, and tools teams actually open every morning.
         </motion.p>
 
-        <motion.div {...rise(0.46)}>
+        <motion.div {...rise(1.65)} className="mt-[4vh]">
           <ContactButton />
         </motion.div>
       </div>
@@ -82,7 +86,7 @@ export default function Hero() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.1, duration: 1 }}
+        transition={{ delay: 2.1, duration: 1 }}
         /* Hidden on phones — at 390px it lands on top of the contact button,
            and the affordance is redundant on a touch device anyway. */
         className="pointer-events-none absolute bottom-[3vh] left-1/2 z-20 hidden
