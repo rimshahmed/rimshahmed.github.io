@@ -25,8 +25,9 @@ const REDUCED =
  *  It is fired, not free-running. <SentinelLayer /> requests one when he
  *  lands — after the entry flight, and on arrival at contact — so every
  *  cameo is guaranteed exactly one, whatever the reader's timing. After
- *  that it repeats on a slow interval, and only while he is on screen
- *  (the render loop is stopped while he is parked, so the timer is too).
+ *  that it repeats on a slow interval, only while he is on screen (the
+ *  render loop is stopped while he is parked, so the timer is too) and
+ *  only while the pointer is quiet — a moving cursor always has his eye.
  *
  *  What makes it legible on an object this small:
  *    - the sweep is centred on wherever he is currently resting, so both
@@ -161,6 +162,10 @@ function Model({ onReady }: { onReady?: () => void }) {
       onReady?.()
     }
 
+    /* The cursor comes first: while the pointer is moving he follows it,
+       and the idle scan waits. Only the two landing scans may interrupt. */
+    const fresh = mouse.active && performance.now() - mouse.lastMove < 3200
+
     /* ---- 1. the scan ------------------------------------------------ */
     if (sentinel.scanRequests !== r.seenRequests) {
       r.seenRequests = sentinel.scanRequests
@@ -171,6 +176,7 @@ function Model({ onReady }: { onReady?: () => void }) {
       !REDUCED &&
       r.scanStart < 0 &&
       !travelling &&
+      !fresh &&
       t - r.lastScanEnd > SCAN_IDLE_EVERY
     ) {
       r.scanStart = t
@@ -197,12 +203,14 @@ function Model({ onReady }: { onReady?: () => void }) {
     /* ---- 3. the cursor, when there is one --------------------------
        Dropped to nothing while a scan runs — he is busy — and handed back
        over ~400ms afterwards so the gaze does not snap to the pointer. */
-    const fresh = mouse.active && performance.now() - mouse.lastMove < 3200
     const wantCursor = fresh && !scanning ? 1 : 0
+    // Let go quickly for a scan, but slowly when the pointer simply goes
+    // quiet — otherwise he visibly loses interest the moment it stops.
+    const release = scanning ? 0.12 : 1.4
     r.cursorWeight =
       wantCursor > r.cursorWeight
         ? Math.min(1, r.cursorWeight + d / 0.4)
-        : Math.max(0, r.cursorWeight - d / 0.12)
+        : Math.max(0, r.cursorWeight - d / release)
     const cursorWeight = r.cursorWeight
     const cursorYaw = THREE.MathUtils.clamp(mouse.x * 0.8, -0.6, 0.6)
     const cursorPitch = THREE.MathUtils.clamp(mouse.y * 0.55, -0.36, 0.36)
