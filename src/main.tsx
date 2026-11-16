@@ -18,6 +18,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/other" element={<PersonalProjects />} />
+        {/* old address, kept so existing links still land */}
         <Route path="/personal" element={<PersonalProjects />} />
         <Route path="/projects/:slug" element={<ProjectPage />} />
       </Routes>
