@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { ContactButton } from '../components/Buttons'
-import ScrambleText from '../components/ScrambleText'
 
 const NAV = [
   { label: 'Work', href: '#projects' },
@@ -8,6 +7,10 @@ const NAV = [
   { label: 'Experience', href: '#experience' },
   { label: 'Contact', href: '#contact' },
 ]
+
+const REDUCED =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const ease = [0.22, 1, 0.36, 1] as const
 const rise = (delay: number) => ({
@@ -58,14 +61,19 @@ export default function Hero() {
           >
             Hi, I&apos;m
           </motion.span>
-          {/* The name decodes itself in — see ScrambleText. */}
+          {/* Focus pull: the name starts soft and widely spaced, then
+              tightens into focus. Skipped entirely under reduced motion. */}
           <motion.em
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="block text-[clamp(4.6rem,17vw,15rem)] leading-[0.95]"
+            initial={
+              REDUCED
+                ? false
+                : { opacity: 0, filter: 'blur(22px)', letterSpacing: '0.2em', scale: 1.05 }
+            }
+            animate={{ opacity: 1, filter: 'blur(0px)', letterSpacing: '-0.015em', scale: 1 }}
+            transition={{ delay: 0.35, duration: 1.7, ease: [0.16, 1, 0.3, 1] }}
+            className="block whitespace-nowrap text-[clamp(4.6rem,17vw,15rem)] leading-[0.95]"
           >
-            <ScrambleText text="Rimsha" delay={0.45} duration={1.3} />
+            Rimsha
           </motion.em>
         </h1>
 
@@ -73,8 +81,8 @@ export default function Hero() {
           {...rise(1.5)}
           className="mt-[4vh] max-w-[46ch] text-[clamp(0.95rem,1.4vw,1.1rem)] leading-[1.75] text-muted"
         >
-          Operations and data analyst turning messy exports into dashboards,
-          forecasts, and tools teams actually open every morning.
+          I&apos;m an operations and data analyst. I build the dashboards and
+          tools that make decisions clearer.
         </motion.p>
 
         <motion.div {...rise(1.65)} className="mt-[4vh]">
